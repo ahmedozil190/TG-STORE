@@ -965,46 +965,7 @@ async def cmd_start(message: Message, bot: Bot = None):
         parse_mode="HTML"
     )
 
-@main_router.callback_query(lambda c: c.data == "my_referral")
-async def cq_my_referral(call: CallbackQuery, bot: Bot):
-    async with async_session() as session:
-        user = (await session.execute(select(User).where(User.id == call.from_user.id))).scalar_one_or_none()
-        if not user:
-            return
-            
-        refs_count = (await session.execute(select(func.count(User.id)).where(User.referred_by == user.id))).scalar() or 0
-        
-        bonus_obj = (await session.execute(select(AppSetting).where(AppSetting.key == "referral_join_bonus"))).scalar_one_or_none()
-        comm_obj = (await session.execute(select(AppSetting).where(AppSetting.key == "referral_commission_percent"))).scalar_one_or_none()
-        
-        bonus_val = float(bonus_obj.value) if bonus_obj and bonus_obj.value else 0.005
-        comm_val = float(comm_obj.value) if comm_obj and comm_obj.value else 1.0
-        
-    bot_info = await bot.get_me()
-    ref_link = f"https://t.me/{bot_info.username}?start=REF{user.id}"
-    
-    text_val = (
-        "Share your referral link with your friends or channels and earn rewards:\n"
-        f"• <b>${bonus_val:.3f if f'{bonus_val:.3f}'[-1] != '0' else bonus_val:.2f}</b> for each person who joins.\n"
-        f"• <b>{comm_val}% commission</b> on all their deposits!\n\n"
-        f"🔗 <b>Your Link:</b>\n<code>{ref_link}</code>\n\n"
-        f"👥 <b>Total Referrals:</b> {refs_count}\n"
-        f"💰 <b>Total Earnings:</b> ${user.referral_earnings or 0.0:.3f if f'{user.referral_earnings or 0.0:.3f}'[-1] != '0' else user.referral_earnings or 0.0:.2f}"
-    )
-    
-    markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Back 🔙", callback_data="back_main")]
-    ])
-    
-    await call.message.edit_text(text_val, parse_mode="HTML", reply_markup=markup)
 
-@main_router.callback_query(lambda c: c.data == "back_main")
-async def cq_back_main(call: CallbackQuery):
-    await call.message.edit_text(
-        "👋 Welcome!\n\n👇 Click the button below to continue",
-        reply_markup=main_keyboard(),
-        parse_mode="HTML"
-    )
 
 
 # ==============================================================================
