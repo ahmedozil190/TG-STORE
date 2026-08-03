@@ -873,7 +873,6 @@ main_router = Router()
 async def cmd_admin(message: Message):
     user_id = message.from_user.id
     if user_id not in STORE_ADMIN_IDS:
-        await message.answer("⛔ Access denied. You are not an admin.")
         return
     
     admin_url = f"{WEBAPP_URL}/admin/store"
