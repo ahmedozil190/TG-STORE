@@ -3078,14 +3078,14 @@
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
 
             // 4. Render page 1 data WHILE section is still hidden
-            if (id === 'users') renderUsers(allUsers);
-            if (id === 'prices') renderPrices(allPrices);
-            if (id === 'analytics') fetchAnalytics();
-            if (id === 'home') renderSales(allTransactions);
-            if (id.startsWith('settings')) fetchStoreSettings();
-            if (id === 'settings-servers') fetchServers();
-            if (id === 'store-user-prices') fetchStoreUserPrices();
-            if (id === 'settings-subscriptions') fetchSubscriptionChannels();
+            if (id === 'users') { renderUsers(allUsers); refreshAdminStoreDataSilently(); }
+            else if (id === 'prices') { renderPrices(allPrices); refreshAdminStoreDataSilently(); }
+            else if (id === 'analytics') fetchAnalytics();
+            else if (id === 'home') { renderSales(allTransactions); refreshAdminStoreDataSilently(); }
+            else if (id.startsWith('settings')) fetchStoreSettings();
+            else if (id === 'settings-servers') fetchServers();
+            else if (id === 'store-user-prices') fetchStoreUserPrices();
+            else if (id === 'settings-subscriptions') fetchSubscriptionChannels();
 
             // 5. Reset scroll BEFORE showing the section
             const scroller = document.getElementById('app-content-scroller');
@@ -3136,6 +3136,71 @@
             const btn = document.getElementById('menu-' + (h === 'home' ? 'dashboard' : h));
             switchNav(h, btn, true);
         };
+
+        async function refreshAdminStoreDataSilently() {
+            try {
+                const tg = window.Telegram?.WebApp;
+                if (!userId) userId = tg?.initDataUnsafe?.user?.id || 0;
+                if (!initData) initData = tg?.initData || '';
+
+                const res = await fetch(`/api/admin/store/data?user_id=${userId}&init_data=${encodeURIComponent(initData)}&_t=${Date.now()}`);
+                if (!res.ok) return;
+                const data = await res.json();
+
+                const stats = data.stats || {};
+
+                const htn = document.getElementById('home-total-numbers');
+                const hic = document.getElementById('home-inventory-countries');
+                const hmin = document.getElementById('home-min-price');
+                const hmax = document.getElementById('home-max-price');
+                if (htn) htn.innerText = stats.stock_count || 0;
+                if (hic) hic.innerText = stats.active_countries_count || 0;
+                if (hmin) hmin.innerText = formatMoney(stats.min_price || 0);
+                if (hmax) hmax.innerText = formatMoney(stats.max_price || 0);
+
+                const hts = document.getElementById('home-total-sales');
+                const htr = document.getElementById('home-total-revenue');
+                if (hts) hts.innerText = stats.total_sales_count || 0;
+                if (htr) htr.innerText = formatMoney(stats.total_revenue || 0);
+
+                const htu = document.getElementById('home-total-users');
+                const hau = document.getElementById('home-active-users');
+                const hbu = document.getElementById('home-banned-users');
+                if (htu) htu.innerText = stats.user_count || 0;
+                if (hau) hau.innerText = stats.active_users || 0;
+                if (hbu) hbu.innerText = stats.banned_users || 0;
+
+                const hac = document.getElementById('home-active-countries');
+                if (hac) hac.innerText = stats.active_countries_count || 0;
+
+                const htcu = document.getElementById('home-stat-total-custom-users');
+                const htcc = document.getElementById('home-stat-total-custom-countries');
+                if (htcu) htcu.innerText = stats.total_custom_users || 0;
+                if (htcc) htcc.innerText = stats.total_custom_countries || 0;
+
+                if (data.bot_name) document.getElementById('sideBrandName').textContent = data.bot_name;
+
+                allUsers = (data.users || []).sort((a, b) => (b.join_date || '').localeCompare(a.join_date || ''));
+                allTransactions = data.transactions || [];
+
+                const ucEl = document.getElementById('user-count');
+                const bcEl = document.getElementById('banned-count');
+                if (ucEl) ucEl.innerText = allUsers.length;
+                if (bcEl) bcEl.innerText = allUsers.filter(u => u.banned).length;
+
+                allPrices = data.prices || [];
+                const sac = document.getElementById('stat-active-countries');
+                if (sac) sac.innerText = allPrices.length;
+
+                const activeView = sessionStorage.getItem('last_view_admin_store') || 'home';
+                if (activeView === 'users') renderUsers(filteredUsers || allUsers);
+                else if (activeView === 'home') renderSales(filteredSales || allTransactions);
+                else if (activeView === 'prices') renderPrices(filteredPrices || allPrices);
+
+            } catch (e) {
+                console.error("Silent admin data refresh error:", e);
+            }
+        }
 
         async function init() {
             try {
@@ -3221,6 +3286,9 @@
                 const menuBtn = document.getElementById('menu-' + (savedView === 'home' ? 'dashboard' : savedView));
                 if (menuBtn) switchNav(savedView, menuBtn, true);
                 else switchNav(savedView, null, true);
+
+                // Start automatic background data refresh every 10 seconds
+                setInterval(refreshAdminStoreDataSilently, 10000);
 
             } catch (e) {
                 console.error("Initialization error:", e);

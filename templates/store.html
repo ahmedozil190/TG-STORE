@@ -2506,6 +2506,21 @@
         function openNav() { document.getElementById('navSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('show'); }
         function closeNav() { document.getElementById('navSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
 
+        async function refreshDashboardDataSilently() {
+            try {
+                if (!userId) return;
+                const resData = await fetch(`/api/store/data?user_id=${userId}&_t=${new Date().getTime()}`);
+                if (!resData.ok) return;
+                const data = await resData.json();
+                if (data.user) {
+                    window.lastDashboardData = data;
+                    renderDashboardStats();
+                }
+            } catch (e) {
+                console.error("Silent user refresh error:", e);
+            }
+        }
+
         function switchNav(id, btn) {
             closeNav();
 
@@ -2530,6 +2545,7 @@
             // Persist for refresh
             sessionStorage.setItem('activeTab', id);
 
+            if (id === 'home') refreshDashboardDataSilently();
             if (id === 'store') fetchCountries();
             if (id === 'history') fetchHistory();
             if (id === 'deposit') fetchDeposits();
@@ -2793,6 +2809,9 @@
                     switchNav('home', null); // Force title/nav sync even for home
                     await fetchDeposits();
                 }
+
+                // Automatic silent background refresh every 12 seconds
+                setInterval(refreshDashboardDataSilently, 12000);
             } catch (e) {
                 console.error("Init Error:", e);
             } finally {
