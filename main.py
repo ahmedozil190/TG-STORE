@@ -15,7 +15,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 from aiogram import Bot, Dispatcher, Router, BaseMiddleware
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.types import (
     Message, CallbackQuery, Update, TelegramObject, User as TGUser,
     InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo,
@@ -558,7 +558,7 @@ def get_text(key: str, lang: str = "ar", **kwargs) -> str:
 def main_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Open 🛒", web_app=WebAppInfo(url=STORE_URL))
+            InlineKeyboardButton(text="Open", web_app=WebAppInfo(url=STORE_URL))
         ]
     ])
 
@@ -864,6 +864,23 @@ class UserUpdateMiddleware(BaseMiddleware):
 
 main_router = Router()
 
+@main_router.message(Command("admin"))
+async def cmd_admin(message: Message):
+    user_id = message.from_user.id
+    if user_id not in STORE_ADMIN_IDS:
+        await message.answer("⛔ Access denied. You are not an admin.")
+        return
+    
+    admin_url = f"{WEBAPP_URL}/admin/store"
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⚙️ Open Admin Dashboard", web_app=WebAppInfo(url=admin_url))]
+    ])
+    await message.answer(
+        "<b>Welcome Admin! 🛠️</b>\nClick the button below to open the Web Admin Control Panel.",
+        reply_markup=markup,
+        parse_mode="HTML"
+    )
+
 @main_router.message(CommandStart())
 async def cmd_start(message: Message, bot: Bot = None):
     if bot:
@@ -871,7 +888,7 @@ async def cmd_start(message: Message, bot: Bot = None):
             await bot.delete_my_commands(scope=BotCommandScopeChat(chat_id=message.from_user.id))
             await bot.set_chat_menu_button(
                 chat_id=message.from_user.id,
-                menu_button=MenuButtonWebApp(text="Open 🛒", web_app=WebAppInfo(url=STORE_URL))
+                menu_button=MenuButtonWebApp(text="Open", web_app=WebAppInfo(url=STORE_URL))
             )
         except Exception:
             pass
