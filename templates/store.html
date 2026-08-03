@@ -1127,7 +1127,7 @@
             <i class="fas fa-bars"></i>
         </div>
         <div class="page-title" id="view-title">Dashboard</div>
-        <div class="user-avatar" id="userInitial">U</div>
+        <div class="user-avatar" id="userInitial"><i class="fas fa-user"></i></div>
     </header>
 
     <main class="main-content">
@@ -2650,8 +2650,7 @@
                 if (userData) {
                     userId = userData.id;
                     const fullName = userData.first_name + (userData.last_name ? ' ' + userData.last_name : '');
-                    const initialEl = document.getElementById('userInitial');
-                    if (initialEl) initialEl.innerText = userData.first_name.charAt(0).toUpperCase();
+
 
                     fetch(`/api/admin/user/sync`, {
                         method: 'POST',
@@ -2748,9 +2747,7 @@
                 if (data.user) {
                     window.lastDashboardData = data;
                     renderDashboardStats();
-                    const nameForUI = (data.user.full_name && data.user.full_name !== 'Unknown') ? data.user.full_name : (userData?.first_name || "User");
-                    const initialEl = document.getElementById('userInitial');
-                    if (initialEl) initialEl.innerText = nameForUI.charAt(0).toUpperCase();
+
 
                     const botUsername = data.bot_username || "YourBot";
                     const refLinkVal = document.getElementById('ref-link-val');

@@ -1852,7 +1852,7 @@
             <i class="fas fa-bars"></i>
         </button>
         <div class="page-title" id="page-title" data-i18n="nav_dashboard">Dashboard</div>
-        <div class="user-avatar" id="userInitial"></div>
+        <div class="user-avatar" id="userInitial"><i class="fas fa-shield-halved"></i></div>
     </div>
 
     <!-- Sidebar Drawer -->
@@ -3185,9 +3185,7 @@
                 if (htcc) htcc.innerText = stats.total_custom_countries || 0;
 
                 if (data.bot_name) document.getElementById('sideBrandName').textContent = data.bot_name;
-                const uname = tg?.initDataUnsafe?.user?.first_name || "AD";
-                const uIEl = document.getElementById('userInitial');
-                if (uIEl) uIEl.textContent = uname.charAt(0).toUpperCase();
+
 
                 allUsers = (data.users || []).sort((a, b) => (b.join_date || '').localeCompare(a.join_date || ''));
                 allTransactions = data.transactions || [];

@@ -881,7 +881,7 @@ async def cmd_admin(message: Message):
         [InlineKeyboardButton(text="Open", web_app=WebAppInfo(url=admin_url))]
     ])
     await message.answer(
-        "👋 Welcome!\n\n👇 Click the button below to continue",
+        "👋 Welcome! - Admin\n\n👇 Click the button below to continue",
         reply_markup=markup,
         parse_mode="HTML"
     )
