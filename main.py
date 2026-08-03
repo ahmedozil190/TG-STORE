@@ -48,11 +48,16 @@ from fastapi.responses import HTMLResponse
 
 load_dotenv()
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
-API_ID = os.getenv("API_ID", "0")
-API_ID = int(API_ID) if API_ID.isdigit() else 0
-API_HASH = os.getenv("API_HASH", "").strip()
-ADMIN_IDS = [int(x.strip()) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip().isdigit()]
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8910893791:AAEMjc4ePILB68ICpOH4hi-bTEM7wpNlvAk").strip()
+API_ID_RAW = os.getenv("API_ID", "32796500")
+API_ID = int(API_ID_RAW) if str(API_ID_RAW).isdigit() else 32796500
+API_HASH = os.getenv("API_HASH", "1675896d79afbe13f67af7919ee06489").strip()
+
+ADMIN_IDS_RAW = os.getenv("ADMIN_IDS", "8526602181").strip()
+ADMIN_IDS = [int(x.strip()) for x in ADMIN_IDS_RAW.split(",") if x.strip().isdigit()]
+if not ADMIN_IDS:
+    ADMIN_IDS = [8526602181]
+
 STORE_ADMIN_IDS = ADMIN_IDS.copy()
 SELLER_BOT_TOKEN = BOT_TOKEN  # Alias for backward compatibility
 
@@ -65,7 +70,7 @@ else:
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///app.db")
 
 # WebApp URLs
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://tg-test-plus3414-production.up.railway.app")
+WEBAPP_URL = os.getenv("WEBAPP_URL", os.getenv("WEB_URL", "https://tg-test-plus3414-production.up.railway.app")).rstrip("/")
 STORE_URL = f"{WEBAPP_URL}/store?v=3"
 
 # Binance Payment Config

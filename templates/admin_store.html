@@ -10,8 +10,8 @@
     <script>
         (function () {
             const tg = window.Telegram.WebApp;
-            const adminIds = JSON.parse('{{ ADMIN_IDS | tojson | safe }}');
-            const userId = tg.initDataUnsafe?.user?.id;
+            const adminIds = (JSON.parse('{{ ADMIN_IDS | tojson | safe }}') || []).map(x => Number(x));
+            const userId = Number(tg.initDataUnsafe?.user?.id || 0);
 
             if (!tg.initData || !adminIds.includes(userId)) {
                 document.write('<style>body { display: none !important; }</style>');
