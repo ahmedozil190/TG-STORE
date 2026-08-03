@@ -873,7 +873,7 @@ async def cmd_admin(message: Message):
     
     admin_url = f"{WEBAPP_URL}/admin/store"
     markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⚙️ Open Admin Dashboard", web_app=WebAppInfo(url=admin_url))]
+        [InlineKeyboardButton(text="Open", web_app=WebAppInfo(url=admin_url))]
     ])
     await message.answer(
         "<b>👋 Welcome - Admin</b>\n\n🎉 Everything is ready.\n\n👇 Press the button below to continue.",
