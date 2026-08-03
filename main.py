@@ -881,7 +881,7 @@ async def cmd_admin(message: Message):
         [InlineKeyboardButton(text="Open", web_app=WebAppInfo(url=admin_url))]
     ])
     await message.answer(
-        "Welcome, Admin!\n\nYou're all set.\n\nPress the button below to continue.",
+        "👋 Welcome, Admin!\n\n🛠️ You're all set.\n\n👇 Press the button below to continue.",
         reply_markup=markup,
         parse_mode="HTML"
     )
@@ -960,7 +960,7 @@ async def cmd_start(message: Message, bot: Bot = None):
             return
     
     await message.answer(
-        "Welcome - User!\n\nYou're all set.\n\nPress the button below to continue.",
+        "👋 Welcome!\n\n✨ You're all set.\n\n👇 Press the button below to continue.",
         reply_markup=main_keyboard(),
         parse_mode="HTML"
     )
@@ -1001,7 +1001,7 @@ async def cq_my_referral(call: CallbackQuery, bot: Bot):
 @main_router.callback_query(lambda c: c.data == "back_main")
 async def cq_back_main(call: CallbackQuery):
     await call.message.edit_text(
-        "Welcome - User!\n\nYou're all set.\n\nPress the button below to continue.",
+        "👋 Welcome!\n\n✨ You're all set.\n\n👇 Press the button below to continue.",
         reply_markup=main_keyboard(),
         parse_mode="HTML"
     )
