@@ -3138,6 +3138,7 @@
         };
 
         async function refreshAdminStoreDataSilently() {
+            if (document.hidden) return;
             try {
                 const tg = window.Telegram?.WebApp;
                 if (!userId) userId = tg?.initDataUnsafe?.user?.id || 0;

@@ -2507,6 +2507,7 @@
         function closeNav() { document.getElementById('navSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
 
         async function refreshDashboardDataSilently() {
+            if (document.hidden) return;
             try {
                 if (!userId) return;
                 const resData = await fetch(`/api/store/data?user_id=${userId}&_t=${new Date().getTime()}`);
