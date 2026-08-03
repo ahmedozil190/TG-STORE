@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لوحة تحكم المتجر | المبرمج</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --glass-bg: rgba(20, 20, 20, 0.7);
+            --gold: #d4af37;
+            --gold-bright: #ffdf00;
+            --gold-gradient: linear-gradient(45deg, #8a6d3b, #d4af37, #f7ef8a, #d4af37, #8a6d3b);
+            --text-color: #ffffff;
+            --text-dim: #b0b0b0;
+            --border-color: rgba(212, 175, 55, 0.2);
+            --accent-glow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(212, 175, 55, 0.1);
+            border-top: 3px solid var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 80px;
+            /* Space for navbar */
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-top: 10px;
+        }
+
+        .header-logo {
+            font-size: 2.5rem;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            margin-bottom: 5px;
+            text-shadow: var(--accent-glow);
+        }
+
+        .header-subtitle {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
+
+        /* Stats Section */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .stat-card:active {
+            transform: scale(0.95);
+        }
+
+        .stat-card i {
+            font-size: 1.5rem;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+
+        .stat-label {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        /* Section Headings */
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        /* Action Cards */
+        .action-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            z-index: 1000;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.8);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.7rem;
+            transition: all 0.3s ease;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--gold);
+        }
+
+        .nav-item i {
+            font-size: 1.4rem;
+            margin-bottom: 4px;
+        }
+
+        /* Input Styles */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+            margin-right: 5px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            color: white;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--gold);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: var(--gold-gradient);
+            color: #000;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, filter 0.2s ease;
+            box-shadow: var(--accent-glow);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+            filter: brightness(1.2);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+        }
+
+        /* List Styles */
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .list-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-info h4 {
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .item-info p {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-dim);
+            border: none;
+            transition: background 0.3s ease;
+        }
+
+        .btn-icon.delete {
+            color: #ff4d4d;
+        }
+
+        .btn-icon.edit {
+            color: var(--gold);
+        }
+
+        /* Tabs */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: rgba(0, 255, 0, 0.1);
+            color: #00ff00;
+        }
+
+        .badge-warning {
+            background: rgba(255, 165, 0, 0.1);
+            color: #ffa500;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--bg-color);
+            border: 1px solid var(--gold);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            padding: 25px;
+            box-shadow: var(--accent-glow);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1 class="header-logo">STORE ADMIN</h1>
+            <p class="header-subtitle">LUXURY MANAGEMENT SYSTEM</p>
+        </header>
+
+        <!-- Dashboard Section -->
+        <div id="section-home" class="content-section active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fa-solid fa-users"></i>
+                    <div class="stat-value" id="stat-users">0</div>
+                    <div class="stat-label">إجمالي المستخدمين</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="stat-value" id="stat-accounts">0</div>
+                    <div class="stat-label">أرقام متاحة</div>
+                </div>
+                <div class="stat-card full-width">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <div class="stat-value" id="stat-balance">$0.00</div>
+                    <div class="stat-label">إجمالي رصيد المستخدمين</div>
+                </div>
+            </div>
+
+            <div class="section-title">إحصائيات المبيعات</div>
+            <div class="card">
+                <div class="item-list" id="recent-transactions">
+                    <!-- Recent transactions go here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Section -->
+        <div id="section-users" class="content-section">
+            <div class="section-title">إدارة المستخدمين</div>
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="input-group">
+                    <input type="text" id="user-search" placeholder="ابحث عن مستخدم (ID)..." oninput="searchUsers()">
+                </div>
+            </div>
+            <div class="item-list" id="user-list">
+                <!-- Users listed here -->
+            </div>
+        </div>
+
+        <!-- Inventory Section -->
+        <div id="section-stock" class="content-section">
+            <div class="section-title">إدارة المخزون</div>
+            <button class="btn" style="margin-bottom: 20px;" onclick="showAddStockModal()">
+                <i class="fa-solid fa-plus"></i> إضافة رقم آلياً
+            </button>
+            <div class="item-list" id="stock-list">
+                <!-- Stock items listed here -->
+            </div>
+        </div>
+
+        <!-- Prices Section -->
+        <div id="section-prices" class="content-section">
+            <div class="section-title">إدارة أسعار الدول</div>
+            <div class="card" style="margin-bottom: 20px;">
+                <button class="btn btn-outline" onclick="showAddPriceModal()">
+                    <i class="fa-solid fa-plus"></i> إضافة سعر لدولة
+                </button>
+            </div>
+            <div class="item-list" id="price-list">
+                <!-- Prices listed here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-item active" onclick="switchSection('home', this)">
+            <i class="fa-solid fa-house"></i>
+            <span>الرئيسية</span>
+        </div>
+        <div class="nav-item" onclick="switchSection('users', this)">
+            <i class="fa-solid fa-users"></i>
+            <span>المستخدمين</span>
+        </div>
+        <div class="nav-item" onclick="switchSection('stock', this)">
+            <i class="fa-solid fa-box-open"></i>
+            <span>المخزون</span>
+        </div>
+        <div class="nav-item" onclick="switchSection('prices', this)">
+            <i class="fa-solid fa-tags"></i>
+            <span>الأسعار</span>
+        </div>
+    </nav>
+
+    <!-- Modals -->
+    <div id="modal-add-stock" class="modal" onclick="closeModal(event, 'modal-add-stock')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div id="stock-step-1">
+                <h3 style="margin-bottom: 20px; color: var(--gold);">إضافة رقم آلي</h3>
+                <div class="input-group">
+                    <label>رقم الهاتف</label>
+                    <input type="text" id="new-phone" placeholder="+201234567890">
+                </div>
+                <button class="btn" id="btn-start-login" onclick="startAutomatedLogin()">طلب كود التحقق</button>
+            </div>
+
+            <div id="stock-step-2" style="display: none;">
+                <h3 style="margin-bottom: 10px; color: var(--gold);">تم إرسال الكود</h3>
+                <p id="detected-info" style="font-size: 0.8rem; margin-bottom: 20px; color: var(--text-dim);"></p>
+                <div class="input-group">
+                    <label>كود التحقق</label>
+                    <input type="text" id="new-code" placeholder="12345">
+                </div>
+                <!-- 2FA Optional -->
+                <div class="input-group">
+                    <label>كلمة مرور التحقق بخطوتين (اختياري)</label>
+                    <input type="password" id="new-password" placeholder="اتركه فارغاً إذا لم يوجد">
+                </div>
+                <button class="btn" id="btn-complete-login" onclick="completeAutomatedLogin()">تأكيد وإضافة
+                    للمخزون</button>
+            </div>
+
+            <button class="btn btn-outline" style="margin-top: 15px;"
+                onclick="closeModal(null, 'modal-add-stock')">إغلاق</button>
+        </div>
+    </div>
+
+    <div id="modal-price" class="modal" onclick="closeModal(event, 'modal-price')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 20px; color: var(--gold);">إعداد سعر الدولة</h3>
+            <div class="input-group">
+                <label>مفتاح الدولة (numeric code)</label>
+                <input type="text" id="price-country-code" placeholder="20">
+            </div>
+            <div class="input-group">
+                <label>اسم الدولة</label>
+                <input type="text" id="price-country-name" placeholder="Egypt">
+            </div>
+            <div class="input-group">
+                <label>سعر البيع للزبائن ($)</label>
+                <input type="number" id="price-val" step="0.1" placeholder="1.5">
+            </div>
+            <div class="input-group">
+                <label>سعر الشراء من الناس ($)</label>
+                <input type="number" id="price-buy-val" step="0.1" placeholder="0.8">
+            </div>
+            <div class="input-group">
+                <label>تأخير الموافقة التلقائية (ثواني)</label>
+                <input type="number" id="price-delay-val" placeholder="0">
+            </div>
+            <button class="btn" onclick="savePrice()">حفظ السعر</button>
+            <button class="btn btn-outline" style="margin-top: 10px;"
+                onclick="closeModal(null, 'modal-price')">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- Edit Balance Modal (already exists) -->
+    <div id="modal-edit-balance" class="modal" onclick="closeModal(event, 'modal-edit-balance')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 20px; color: var(--gold);">تعديل رصيد المستخدم</h3>
+            <p id="edit-user-id" style="font-size: 0.8rem; margin-bottom: 15px; color: var(--text-dim);"></p>
+            <div class="input-group">
+                <label>المبلغ الجديد ($)</label>
+                <input type="number" id="new-balance-val" step="0.1">
+            </div>
+            <button class="btn" onclick="saveBalance()">تحديث الرصيد</button>
+            <button class="btn btn-outline" style="margin-top: 10px;"
+                onclick="closeModal(null, 'modal-edit-balance')">إلغاء</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.headerColor = '#050505';
+        tg.backgroundColor = '#050505';
+
+        let currentHash = null;
+        let detectedCountry = "";
+        let detectedPrice = 0;
+
+        function formatMoney(val) {
+            let num = parseFloat(val || 0);
+            if (num === 0) return "0";
+            let s = num.toFixed(3);
+            return s.replace(/0+$/, '').replace(/\.$/, '.0');
+        }
+
+        // Fetch Data
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/admin/data');
+                const data = await response.json();
+
+                document.getElementById('stat-users').innerText = data.stats.user_count;
+                document.getElementById('stat-accounts').innerText = data.stats.stock_count;
+                document.getElementById('stat-balance').innerText = `$${formatMoney(data.stats.total_balance)}`;
+
+                renderUsers(data.users);
+                renderStock(data.accounts);
+                renderTransactions(data.transactions);
+                renderPrices(data.prices);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+            }
+        }
+
+        function renderUsers(users) {
+            const list = document.getElementById('user-list');
+            list.innerHTML = users.map(user => `
+                <div class="list-item">
+                    <div class="item-info">
+                        <h4>${user.id}</h4>
+                        <p>تاريخ الانضمام: ${user.join_date}</p>
+                    </div>
+                    <div style="text-align: left;">
+                        <span class="badge badge-success">$${formatMoney(user.balance)}</span>
+                        <div class="item-actions" style="margin-top: 5px;">
+                            <button class="btn-icon edit" onclick="showEditBalance('${user.id}', ${user.balance})">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderStock(stock) {
+            const list = document.getElementById('stock-list');
+            list.innerHTML = stock.map(item => `
+                <div class="list-item">
+                    <div class="item-info">
+                        <h4>${item.phone_number}</h4>
+                        <p>${item.country} | <span style="color:var(--gold)">$${item.price}</span></p>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-icon delete" onclick="deleteStock(${item.id})">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTransactions(txns) {
+            const list = document.getElementById('recent-transactions');
+            if (!txns || txns.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:var(--text-dim); padding:20px;">لا توجد عمليات مبيعات حالية</p>';
+                return;
+            }
+            list.innerHTML = txns.map(tx => `
+                <div class="list-item">
+                    <div class="item-info">
+                        <h4>بيع رقم من ${tx.country}</h4>
+                        <p>${tx.phone_number || 'Account'} -> ${tx.buyer_id}</p>
+                    </div>
+                    <span style="color: #00ff00; font-weight:700;">$${tx.price}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderPrices(prices) {
+            const list = document.getElementById('price-list');
+            if (!prices || prices.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:var(--text-dim); padding:20px;">مخزون الأسعار فارغ، قم بإضافة أسعار للدول</p>';
+                return;
+            }
+            list.innerHTML = prices.map(p => `
+                <div class="list-item">
+                    <div class="item-info">
+                        <h4>${p.name} (+${p.code})</h4>
+                        <p>البيع: <span style="color:var(--gold)">$${p.price}</span> | الشراء: <span style="color:#00ff00">$${p.buy_price}</span></p>
+                        <p style="font-size:0.75rem; color:var(--text-dim)">الموافقة بعد: ${p.approve_delay} ثانية</p>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-icon edit" onclick="editPrice('${p.code}', '${p.name}', ${p.price}, ${p.buy_price}, ${p.approve_delay})">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchSection(id, el) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('section-' + id).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+
+            tg.HapticFeedback.selectionChanged();
+        }
+
+        // Automated Login Logic
+        function showAddStockModal() {
+            document.getElementById('stock-step-1').style.display = 'block';
+            document.getElementById('stock-step-2').style.display = 'none';
+            document.getElementById('modal-add-stock').style.display = 'flex';
+        }
+
+        async function startAutomatedLogin() {
+            const phone = document.getElementById('new-phone').value;
+            if (!phone) { tg.showAlert('يرجى إدخال الرقم!'); return; }
+
+            const btn = document.getElementById('btn-start-login');
+            btn.disabled = true;
+            btn.innerText = 'جاري الإرسال...';
+
+            try {
+                const res = await fetch('/api/admin/stock/start-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: phone })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    currentHash = data.hash;
+                    detectedCountry = data.country;
+                    detectedPrice = data.price;
+
+                    document.getElementById('detected-info').innerHTML = `
+                        الدولة: <b>${detectedCountry}</b><br>
+                        السعر التلقائي: <b>$${detectedPrice}</b>
+                    `;
+
+                    document.getElementById('stock-step-1').style.display = 'none';
+                    document.getElementById('stock-step-2').style.display = 'block';
+                } else {
+                    tg.showAlert('❌ خطأ: ' + (data.detail || 'فشل البدء'));
+                }
+            } catch (err) {
+                tg.showAlert('❌ فشل الاتصال بالسيرفر');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'طلب كود التحقق';
+            }
+        }
+
+        async function completeAutomatedLogin() {
+            const code = document.getElementById('new-code').value;
+            const password = document.getElementById('new-password').value;
+            const phone = document.getElementById('new-phone').value;
+
+            if (!code) { tg.showAlert('يرجى إدخال الكود!'); return; }
+
+            const btn = document.getElementById('btn-complete-login');
+            btn.disabled = true;
+            btn.innerText = 'جاري التحقق والحفظ...';
+
+            try {
+                const res = await fetch('/api/admin/stock/complete-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: phone,
+                        code: code,
+                        hash: currentHash,
+                        password: password,
+                        country: detectedCountry,
+                        price: detectedPrice
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    tg.showAlert('✅ تم إضافة الرقم للمخزون بنجاح!');
+                    closeModal(null, 'modal-add-stock');
+                    fetchData();
+                } else {
+                    tg.showAlert('❌ فشل: ' + (data.detail || 'حدث خطأ في التحقق'));
+                }
+            } catch (err) {
+                tg.showAlert('❌ فشل الاتصال بالسيرفر');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'تأكيد وإضافة للمخزون';
+            }
+        }
+
+        // Price Management
+        function showAddPriceModal() {
+            document.getElementById('price-country-code').value = '';
+            document.getElementById('price-country-name').value = '';
+            document.getElementById('price-val').value = '';
+            document.getElementById('price-buy-val').value = '';
+            document.getElementById('price-delay-val').value = '';
+            document.getElementById('modal-price').style.display = 'flex';
+        }
+
+        function editPrice(code, name, price, buy_price, delay) {
+            document.getElementById('price-country-code').value = code;
+            document.getElementById('price-country-name').value = name;
+            document.getElementById('price-val').value = price;
+            document.getElementById('price-buy-val').value = buy_price;
+            document.getElementById('price-delay-val').value = delay;
+            document.getElementById('modal-price').style.display = 'flex';
+        }
+
+        async function savePrice() {
+            const code = document.getElementById('price-country-code').value;
+            const name = document.getElementById('price-country-name').value;
+            const price = document.getElementById('price-val').value;
+            const buy_price = document.getElementById('price-buy-val').value;
+            const delay = document.getElementById('price-delay-val').value;
+
+            if (!code || !name || !price || !buy_price) { tg.showAlert('املأ كل الخانات!'); return; }
+
+            const res = await fetch('/api/admin/prices/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    country_code: code,
+                    country_name: name,
+                    price: parseFloat(price),
+                    buy_price: parseFloat(buy_price),
+                    approve_delay: parseInt(delay) || 0
+                })
+            });
+
+            if (res.ok) {
+                closeModal(null, 'modal-price');
+                fetchData();
+            } else {
+                tg.showAlert('❌ فشل الحفظ');
+            }
+        }
+
+        // Other Actions (Balance/Delete) - already implemented
+        let currentEditingUserId = null;
+        function showEditBalance(id, current) {
+            currentEditingUserId = id;
+            document.getElementById('edit-user-id').innerText = 'المستخدم: ' + id;
+            document.getElementById('new-balance-val').value = current;
+            document.getElementById('modal-edit-balance').style.display = 'flex';
+        }
+
+        async function saveBalance() {
+            const amount = document.getElementById('new-balance-val').value;
+            const res = await fetch('/api/admin/user/balance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: currentEditingUserId, amount: amount })
+            });
+
+            if (res.ok) {
+                tg.showAlert('✅ تم تحديث الرصيد');
+                closeModal(null, 'modal-edit-balance');
+                fetchData();
+            } else {
+                tg.showAlert('❌ فشل في التحديث');
+            }
+        }
+
+        async function deleteStock(id) {
+            tg.showConfirm('هل أنت متأكد من حذف هذا الرقم؟', async (ok) => {
+                if (!ok) return;
+                const res = await fetch(`/api/admin/stock/delete/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    fetchData();
+                }
+            });
+        }
+
+        function closeModal(e, id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Search
+        function searchUsers() {
+            const query = document.getElementById('user-search').value.toLowerCase();
+            const items = document.querySelectorAll('#user-list .list-item');
+            items.forEach(item => {
+                const id = item.querySelector('h4').innerText.toLowerCase();
+                item.style.display = id.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        window.onload = fetchData;
+    </script>
+</body>
+
+</html>
