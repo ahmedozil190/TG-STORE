@@ -31,7 +31,6 @@ import time
 import requests
 import pycountry
 import phonenumbers
-import geocoder
 import urllib.request
 import urllib.parse
 import hashlib
