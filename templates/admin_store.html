@@ -4531,7 +4531,17 @@
                         <div style="background: rgba(59, 130, 246, 0.02); border: 1px solid rgba(59, 130, 246, 0.08); padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 20px;">
                             <span style="${lblS}">${currentLang === 'ar' ? 'النوع' : 'TYPE'}</span>
                             <span style="color: var(--text-secondary); font-weight: 500; font-size: 1.1rem; text-align: right; flex: 1; min-width: 0; text-transform: uppercase;">
-                                ${s.server_type || 'OTHER'}
+                                ${(() => {
+                                    const t = s.server_type || '';
+                                    const u = s.url || '';
+                                    const typeMap = { 'max': 'Max', 'fast': 'Fast', 'lion': 'Lion', 'spider': 'Spider', 'other': 'Other' };
+                                    if (t && typeMap[t]) return typeMap[t];
+                                    if (u.includes('max-tg.com')) return 'Max';
+                                    if (u.includes('fast-tg.com')) return 'Fast';
+                                    if (u.includes('TG-Lion.net') || u.includes('tg-lion')) return 'Lion';
+                                    if (u.includes('spider-service.com')) return 'Spider';
+                                    return 'Other';
+                                })()}
                             </span>
                         </div>
                         
