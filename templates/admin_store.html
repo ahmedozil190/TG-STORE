@@ -366,9 +366,13 @@
             color: var(--text-p);
         }
 
-        .nav-item.active {
-            border: 1px solid var(--border);
-            color: var(--accent);
+        .nav-item.active,
+        .nav-item:focus,
+        .nav-item:active {
+            background: var(--card-glass);
+            border: 1px solid var(--accent-purple) !important;
+            color: var(--accent-purple);
+            outline: none !important;
         }
 
         .nav-item i {
