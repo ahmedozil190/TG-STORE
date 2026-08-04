@@ -3424,8 +3424,13 @@ async def find_country_price_for_phone(phone: str, session):
 
     digits_only = phone.lstrip('+')
     padded_phone = phone
-    if len(digits_only) < 10:
-        padded_phone = phone + ("0" * (12 - len(phone)))
+    if len(digits_only) < 11:
+        if digits_only.startswith("1"):
+            remainder = 11 - len(digits_only)
+            filler = ("5550100" * 2)[:remainder]
+            padded_phone = phone + filler
+        else:
+            padded_phone = phone + ("0" * (12 - len(phone)))
 
     country_code = ""
     iso_code = "XX"
