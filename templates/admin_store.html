@@ -356,17 +356,23 @@
             font-size: 0.95rem;
             cursor: pointer;
             transition: all 0.2s;
+            border: 1px solid transparent;
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .nav-item:hover,
-        .nav-item.active {
+        .nav-item:hover {
             background: var(--card-glass);
             color: var(--text-p);
         }
 
-        .nav-item.active {
-            border: 1px solid var(--border);
-            color: var(--accent);
+        .nav-item.active,
+        .nav-item:focus,
+        .nav-item:active {
+            background: var(--card-glass);
+            border: 1px solid var(--accent-purple) !important;
+            color: var(--accent-purple);
+            outline: none !important;
         }
 
         .nav-item i {
@@ -2235,23 +2241,25 @@
                     </div>
                 </div>
 
-                <!-- Toolbar (Search Box & Add Button) -->
-                <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center; width: 100%;">
-                    <div
-                        style="flex: 0 0 calc(80% - 5px); width: calc(80% - 5px); height: 54px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); box-sizing: border-box;">
-                        <i class="fas fa-search" style="color: var(--text-s); font-size: 0.95rem; opacity: 0.7;"></i>
-                        <input type="text" id="inv-search" placeholder="Search country..."
-                            oninput="searchInventory()"
-                            style="background: transparent; border: none; outline: none; color: var(--text-p); font-size: 0.95rem; font-weight: 600; width: 100%;">
-                    </div>
-                    <button onclick="openAddNumberModal()" class="primary-btn" id="btn-open-add-number"
-                        style="flex: 0 0 calc(20% - 5px); width: calc(20% - 5px); height: 54px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border-radius: 16px; box-sizing: border-box; flex-shrink: 0;">
-                        <i class="fas fa-plus"></i>
-                    </button>
+                <!-- Toolbar (Search Box) -->
+                <div
+                    style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; height: 54px; box-shadow: var(--shadow); margin-bottom: 25px;">
+                    <i class="fas fa-search" style="color: var(--text-s); font-size: 0.95rem; opacity: 0.7;"></i>
+                    <input type="text" id="inv-search" placeholder="Search country..."
+                        oninput="searchInventory()"
+                        style="flex: 1; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 0.95rem; font-weight: 600;">
                 </div>
 
-                <!-- Countries List Card -->
-                <div class="card" style="padding: 20px;">
+                <!-- Countries List Card with Title & Add Button Header -->
+                <div class="card" style="padding: 22px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <div class="section-header" style="margin: 0;">
+                            <h2 data-i18n="nav_inventory">Inventory</h2>
+                        </div>
+                        <button class="btn-add" onclick="openAddNumberModal()">
+                            <i class="fas fa-plus"></i> <span data-i18n="btn_add">Add</span>
+                        </button>
+                    </div>
                     <div id="inv-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
                 </div>
 
@@ -3459,7 +3467,7 @@
                 const hmin = document.getElementById('home-min-price');
                 const hmax = document.getElementById('home-max-price');
                 if (htn) htn.innerText = stats.stock_count || 0;
-                if (hic) hic.innerText = stats.active_countries_count || 0;
+                if (hic) hic.innerText = stats.inventory_countries_count ?? (stats.active_countries_count || 0);
                 if (hmin) hmin.innerText = formatMoney(stats.min_price || 0);
                 if (hmax) hmax.innerText = formatMoney(stats.max_price || 0);
 
@@ -3525,7 +3533,7 @@
                 const hmin = document.getElementById('home-min-price');
                 const hmax = document.getElementById('home-max-price');
                 if (htn) htn.innerText = stats.stock_count || 0;
-                if (hic) hic.innerText = stats.active_countries_count || 0;
+                if (hic) hic.innerText = stats.inventory_countries_count ?? (stats.active_countries_count || 0);
                 if (hmin) hmin.innerText = formatMoney(stats.min_price || 0);
                 if (hmax) hmax.innerText = formatMoney(stats.max_price || 0);
 

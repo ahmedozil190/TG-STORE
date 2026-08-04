@@ -2985,6 +2985,7 @@ async def get_admin_store_data(user_id: int, init_data: str):
 
             # Price stats
             active_countries_count = (await session.execute(select(func.count(CountryPrice.id)).where(CountryPrice.price > 0))).scalar() or 0
+            inventory_countries_count = (await session.execute(select(func.count(func.distinct(Account.country))).where(Account.status == AccountStatus.AVAILABLE, Account.server_id == None))).scalar() or 0
             min_price = (await session.execute(select(func.min(CountryPrice.price)).where(CountryPrice.price > 0))).scalar() or 0.0
             max_price = (await session.execute(select(func.max(CountryPrice.price)).where(CountryPrice.price > 0))).scalar() or 0.0
 
@@ -3092,6 +3093,7 @@ async def get_admin_store_data(user_id: int, init_data: str):
                 "total_deposit_requests": total_deposit_requests,
                 "total_deposits_amount": total_deposits_amount,
                 "active_countries_count": active_countries_count,
+                "inventory_countries_count": inventory_countries_count,
                 "total_custom_users": total_custom_users,
                 "total_custom_countries": total_custom_countries,
                 "min_price": min_price,
