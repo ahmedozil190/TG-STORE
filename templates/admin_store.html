@@ -5694,13 +5694,31 @@
                 const data = await res.json();
                 if (data.status === 'success' && data.code) {
                     copyToClipboard(data.code);
-                    showToast(currentLang === 'ar' ? 'كود التحقق' : 'OTP Code', `${currentLang === 'ar' ? 'تم نسخ كود التحقق:' : 'OTP Code copied:'} ${data.code}`, 'success');
+                    await showAlert(
+                        'OTP Code',
+                        `OTP Code fetched successfully:\n\n 🔑 ${data.code} \n\n(Code copied to clipboard automatically)`,
+                        'fas fa-key',
+                        'rgba(16, 185, 129, 0.15)',
+                        '#10b981'
+                    );
                 } else {
-                    showToast(currentLang === 'ar' ? 'تنبيه' : 'Notice', data.message || (currentLang === 'ar' ? 'لم يتم العثور على كود' : 'No code found'), 'error');
+                    await showAlert(
+                        'OTP Error',
+                        data.message || 'No OTP code received for this number in the last 2 minutes',
+                        'fas fa-exclamation-triangle',
+                        'rgba(239, 68, 68, 0.15)',
+                        '#ef4444'
+                    );
                 }
             } catch (e) {
                 console.error("Fetch OTP error:", e);
-                showToast(currentLang === 'ar' ? 'خطأ' : 'Error', currentLang === 'ar' ? 'حدث خطأ أثناء جلب الكود' : 'Error fetching OTP code', 'error');
+                await showAlert(
+                    'Error',
+                    'Error connecting to server to fetch OTP code',
+                    'fas fa-wifi',
+                    'rgba(239, 68, 68, 0.15)',
+                    '#ef4444'
+                );
             } finally {
                 btnEl.disabled = false;
                 btnEl.innerHTML = originalContent;

@@ -4052,13 +4052,17 @@ async def get_admin_stock_otp(acc_id: int, user_id: int, init_data: str):
         if not acc:
             raise HTTPException(status_code=404, detail="Account not found")
         if not acc.session_string:
-            return {"status": "error", "message": "No session available"}
+            return {"status": "error", "message": "No active session available"}
         
         try:
             client = await _create_pyrogram_client(acc.session_string)
             await client.connect()
             code = None
-            async for message in client.get_chat_history(777000, limit=5):
+            now = time.time()
+            async for message in client.get_chat_history(777000, limit=10):
+                msg_ts = message.date.timestamp() if message.date else 0
+                if (now - msg_ts) > 120:
+                    continue
                 if message.text:
                     match = re.search(r'\b(\d{5,6})\b', message.text)
                     if match:
@@ -4068,9 +4072,9 @@ async def get_admin_stock_otp(acc_id: int, user_id: int, init_data: str):
             if code:
                 return {"status": "success", "code": code}
             else:
-                return {"status": "error", "message": "No OTP code found in Telegram messages"}
+                return {"status": "error", "message": "No OTP code received"}
         except Exception as e:
-            return {"status": "error", "message": str(e)}
+            return {"status": "error", "message": f"Error fetching OTP code: {str(e)}"}
 
 @app.post("/api/admin/user/balance")
 async def update_balance(data: BalanceUpdate):
