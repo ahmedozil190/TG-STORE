@@ -2355,7 +2355,7 @@
                 <!-- Toolbar (Purple Gradient Back Button + Search Bar) -->
                 <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; width: 100%; box-sizing: border-box;">
                     <button onclick="switchNav('inventory', null, true)"
-                        style="flex: 0 0 54px; width: 54px; height: 54px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #5865F2, #8b5cf6) !important; border: 1px solid rgba(139, 92, 246, 0.4); border-radius: 16px; color: #ffffff !important; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.35); flex-shrink: 0; transition: all 0.2s; box-sizing: border-box;">
+                        style="flex: 0 0 54px; width: 54px; height: 54px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #5865F2, #8b5cf6) !important; border: 1px solid rgba(139, 92, 246, 0.4); border-radius: 16px; color: #ffffff !important; cursor: pointer; font-size: 1.1rem; flex-shrink: 0; transition: all 0.2s; box-sizing: border-box;">
                         <i class="fas fa-arrow-left" style="color: #ffffff !important; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; line-height: 1;"></i>
                     </button>
                     <div
@@ -5781,22 +5781,18 @@
                 if (data.status === 'success' && data.code) {
                     showOTPModal(data.code);
                 } else {
-                    await showAlert(
+                    showToast(
                         'OTP Error',
                         data.message || 'No OTP code received for this number in the last 2 minutes',
-                        'fas fa-exclamation-triangle',
-                        'rgba(239, 68, 68, 0.15)',
-                        '#ef4444'
+                        'error'
                     );
                 }
             } catch (e) {
                 console.error("Fetch OTP error:", e);
-                await showAlert(
+                showToast(
                     'Error',
                     'Error connecting to server to fetch OTP code',
-                    'fas fa-wifi',
-                    'rgba(239, 68, 68, 0.15)',
-                    '#ef4444'
+                    'error'
                 );
             } finally {
                 btnEl.disabled = false;
