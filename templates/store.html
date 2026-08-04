@@ -1830,9 +1830,11 @@
                 btn_get_login: "Get Login Code",
                 lbl_number: "NUMBER",
                 lbl_date: "DATE",
-                lbl_paid: "PAID"
+                lbl_paid: "PAID",
+                all: "All"
             },
             ar: {
+                all: "الكل",
                 loading: "تحسين المتجر...", nav_home: "لوحة التحكم", nav_store: "شراء رقم", nav_deposit: "إيداع", nav_history: "سجل الطلبات", nav_support: "الدعم", nav_referrals: "نظام الإحالات",
                 financials_header: "البيانات المالية", stats_header: "الإحصائيات", balance: "الرصيد الحالي", total_spent: "إجمالي المشتريات", total_deposits: "إجمالي الإيداعات",
                 completed_orders: "الطلبات المكتملة", active_orders: "الطلبات النشطة", unique_countries: "الدول الفريدة",
@@ -3392,24 +3394,24 @@
             const bar = document.getElementById('server-filter-bar');
             if (!serversList || serversList.length <= 1) {
                 bar.classList.remove('visible');
-                activeServerFilter = serversList.length === 1 ? serversList[0] : 'all';
+                activeServerFilter = 'all';
                 updateStatsForFilter();
                 return;
             }
             bar.classList.add('visible');
 
-            // Count per server
-            const countMap = {};
-            countries.forEach(c => {
-                countMap[c.server_name] = (countMap[c.server_name] || 0) + 1;
-            });
-
-            // Auto-select first server if no filter is active
-            if (activeServerFilter === 'all') {
-                activeServerFilter = serversList[0];
+            // Default to 'all' if filter is not valid
+            if (!activeServerFilter || (activeServerFilter !== 'all' && !serversList.includes(activeServerFilter))) {
+                activeServerFilter = 'all';
             }
 
-            let html = '';
+            const allLabel = (translations[currentLang] && translations[currentLang].all) ? translations[currentLang].all : 'All';
+
+            let html = `<div class="server-chip ${activeServerFilter === 'all' ? 'active' : ''}" onclick="setServerFilter('all', this)">
+                <span class="chip-dot"></span>
+                <span>${allLabel}</span>
+            </div>`;
+
             serversList.forEach(name => {
                 const isActive = name === activeServerFilter ? 'active' : '';
                 html += `<div class="server-chip ${isActive}" onclick="setServerFilter('${name.replace(/'/g, "\\'")}', this)">
@@ -3419,10 +3421,9 @@
             });
 
             bar.classList.remove('single-server', 'two-servers');
-            if (serversList.length === 1) bar.classList.add('single-server');
-            else if (serversList.length === 2) bar.classList.add('two-servers');
-
             bar.innerHTML = html;
+            filterStore();
+            updateStatsForFilter();
         }
 
         function setServerFilter(server, el) {
@@ -3434,18 +3435,21 @@
         }
 
         function updateStatsForFilter() {
-            let filtered = countries;
-            if (activeServerFilter !== 'all') {
+            let filtered = countries || [];
+            if (activeServerFilter && activeServerFilter !== 'all') {
                 filtered = filtered.filter(c => c.server_name === activeServerFilter);
             }
-            const totalNumbers = filtered.reduce((s, c) => s + c.count, 0);
+            const totalNumbers = filtered.reduce((s, c) => s + (c.count || 0), 0);
             const countriesCount = new Set(filtered.map(c => c.name)).size;
             const validPrices = filtered.map(c => parseFloat(c.buy_price)).filter(p => !isNaN(p) && p > 0);
             const lowestPrice = validPrices.length ? Math.min(...validPrices) : 0;
 
-            document.getElementById('stat-total-numbers').innerHTML = `${totalNumbers}&nbsp;<span>${translations[currentLang].unit_numbers}</span>`;
-            document.getElementById('stat-countries').innerHTML = `${countriesCount}&nbsp;<span>${translations[currentLang].unit_countries}</span>`;
-            document.getElementById('stat-lowest-price').innerHTML = `${formatMoney(lowestPrice)}&nbsp;<span>${translations[currentLang].unit_usd}</span>`;
+            const tnEl = document.getElementById('stat-total-numbers');
+            if (tnEl) tnEl.innerHTML = `${totalNumbers}&nbsp;<span>${translations[currentLang].unit_numbers}</span>`;
+            const cnEl = document.getElementById('stat-countries');
+            if (cnEl) cnEl.innerHTML = `${countriesCount}&nbsp;<span>${translations[currentLang].unit_countries}</span>`;
+            const lpEl = document.getElementById('stat-lowest-price');
+            if (lpEl) lpEl.innerHTML = `${formatMoney(lowestPrice)}&nbsp;<span>${translations[currentLang].unit_usd}</span>`;
         }
 
         function openBuyModal(c) {
