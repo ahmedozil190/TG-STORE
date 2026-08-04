@@ -2844,8 +2844,8 @@
                     await fetchDeposits();
                 }
 
-                // Automatic silent background refresh every 12 seconds
-                setInterval(refreshDashboardDataSilently, 12000);
+                // Automatic silent background refresh every 5 seconds
+                setInterval(refreshDashboardDataSilently, 5000);
             } catch (e) {
                 console.error("Init Error:", e);
             } finally {
