@@ -2227,9 +2227,11 @@
 
                 <!-- Toolbar (80% Search Box matching store.html / 20% Add Button with Identical Height 54px & Radius 16px) -->
                 <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center; width: 100%;">
-                    <div style="flex: 0 0 calc(80% - 5px); width: calc(80% - 5px); height: 54px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); box-sizing: border-box;">
+                    <div
+                        style="flex: 0 0 calc(80% - 5px); width: calc(80% - 5px); height: 54px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); box-sizing: border-box;">
                         <i class="fas fa-search" style="color: var(--text-s); font-size: 0.95rem; opacity: 0.7;"></i>
-                        <input type="text" id="inv-search" placeholder="Search phone or country..." oninput="searchInventory()"
+                        <input type="text" id="inv-search" placeholder="Search phone or country..."
+                            oninput="searchInventory()"
                             style="background: transparent; border: none; outline: none; color: var(--text-p); font-size: 0.95rem; font-weight: 600; width: 100%;">
                     </div>
                     <button onclick="openAddNumberModal()" class="primary-btn" id="btn-open-add-number"
@@ -2242,9 +2244,11 @@
                 <div class="card" style="padding: 20px;">
                     <div id="inv-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
                     <div id="inv-pagination" class="pagination-ctrls" style="display: none; margin-top: 16px;">
-                        <button class="pg-btn" id="invPgPrev" onclick="invPrevPage()"><i class="fas fa-chevron-left"></i> <span data-i18n="pg_prev">Prev</span></button>
+                        <button class="pg-btn" id="invPgPrev" onclick="invPrevPage()"><i
+                                class="fas fa-chevron-left"></i> <span data-i18n="pg_prev">Prev</span></button>
                         <span class="pg-info" id="invPgInfo">Page 1 / 1</span>
-                        <button class="pg-btn" id="invPgNext" onclick="invNextPage()"><span data-i18n="pg_next">Next</span> <i class="fas fa-chevron-right"></i></button>
+                        <button class="pg-btn" id="invPgNext" onclick="invNextPage()"><span
+                                data-i18n="pg_next">Next</span> <i class="fas fa-chevron-right"></i></button>
                     </div>
                 </div>
 
@@ -2760,53 +2764,82 @@
 
     <!-- ===== Add Number Modal (Matching seller.html Sourcing Wizard Design) ===== -->
     <div id="add-number-modal" class="modal-overlay">
-        <div class="modal-card" onclick="event.stopPropagation()" style="max-width: 420px; position: relative; padding: 35px 25px; text-align: center; border-radius: 28px; background: var(--bg-elevated); border: 1px solid var(--border); box-shadow: var(--shadow);">
+        <div class="modal-card" onclick="event.stopPropagation()"
+            style="max-width: 420px; position: relative; padding: 35px 25px; text-align: center; border-radius: 28px; background: var(--bg-elevated); border: 1px solid var(--border); box-shadow: var(--shadow);">
             <!-- Close Button Top Right -->
-            <button onclick="closeAddNumberModal(true)" type="button" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-secondary); width: 34px; height: 34px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; z-index: 10;">
+            <button onclick="closeAddNumberModal(true)" type="button"
+                style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-secondary); width: 34px; height: 34px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; z-index: 10;">
                 <i class="fas fa-times" style="font-size: 1rem;"></i>
             </button>
 
             <!-- Step 1: Phone -->
             <div id="inv-step-1">
-                <div class="w-icon" style="width: 70px; height: 70px; margin: 10px auto 20px; background: rgba(88, 101, 242, 0.1); color: var(--accent); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
+                <div class="w-icon"
+                    style="width: 70px; height: 70px; margin: 10px auto 20px; background: rgba(88, 101, 242, 0.1); color: var(--accent); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
                     <i class="fas fa-mobile-alt"></i>
                 </div>
-                <h2 class="w-title" style="font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; color: var(--text-p);" data-i18n="account_details_title">Account Details</h2>
-                <p class="w-desc" style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5;" data-i18n="account_details_desc">Enter the international phone number. We'll automatically detect the country and your reward price.</p>
+                <h2 class="w-title"
+                    style="font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; color: var(--text-p);"
+                    data-i18n="account_details_title">Account Details</h2>
+                <p class="w-desc"
+                    style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5;"
+                    data-i18n="account_details_desc">Enter the international phone number. We'll automatically detect
+                    the country and your reward price.</p>
 
-                <div class="input-group" style="border-bottom: 2px solid var(--border); margin-bottom: 25px; padding-bottom: 8px; text-align: left;">
-                    <label data-i18n="phone_number_lbl" style="display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">PHONE NUMBER</label>
-                    <input type="tel" inputmode="tel" id="inv-phone-input" class="w-input" placeholder="+123..." oninput="checkInvPhoneInput()" style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.3rem; font-weight: 700; font-family: inherit; direction: ltr;">
+                <div class="input-group"
+                    style="border-bottom: 2px solid var(--border); margin-bottom: 25px; padding-bottom: 8px; text-align: left;">
+                    <label data-i18n="phone_number_lbl"
+                        style="display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">PHONE
+                        NUMBER</label>
+                    <input type="tel" inputmode="tel" id="inv-phone-input" class="w-input" placeholder="+123..."
+                        oninput="checkInvPhoneInput()"
+                        style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.3rem; font-weight: 700; font-family: inherit; direction: ltr;">
                 </div>
 
-                <button class="btn-action" id="inv-get-code-btn" onclick="invGetCode(this)" disabled style="width: 100%; background: var(--accent); color: white; padding: 18px; border-radius: 18px; border: none; font-size: 1rem; font-weight: 800; cursor: not-allowed; box-shadow: none; opacity: 0.45; pointer-events: none; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <button class="btn-action" id="inv-get-code-btn" onclick="invGetCode(this)" disabled
+                    style="width: 100%; background: var(--accent); color: white; padding: 18px; border-radius: 18px; border: none; font-size: 1rem; font-weight: 800; cursor: not-allowed; box-shadow: none; opacity: 0.45; pointer-events: none; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
                     <span data-i18n="btn_get_code">Get Verification Code</span>
                 </button>
             </div>
 
             <!-- Step 2: Code -->
             <div id="inv-step-2" style="display: none;">
-                <div class="w-icon" style="width: 70px; height: 70px; margin: 10px auto 20px; background: rgba(245, 158, 11, 0.1); color: var(--warning); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
+                <div class="w-icon"
+                    style="width: 70px; height: 70px; margin: 10px auto 20px; background: rgba(245, 158, 11, 0.1); color: var(--warning); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
                     <i class="fas fa-key"></i>
                 </div>
-                <h2 class="w-title" style="font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; color: var(--text-p);" data-i18n="verify_login_title">Verify Login</h2>
-                <p class="w-desc" style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5;" data-i18n="inv_step2_desc">Enter the verification code sent to Telegram.</p>
+                <h2 class="w-title"
+                    style="font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; color: var(--text-p);"
+                    data-i18n="verify_login_title">Verify Login</h2>
+                <p class="w-desc"
+                    style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5;"
+                    data-i18n="inv_step2_desc">Enter the verification code sent to Telegram.</p>
 
-                <div class="input-group" style="border-bottom: 2px solid var(--border); margin-bottom: 20px; padding-bottom: 8px; text-align: left;">
-                    <label style="display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">LOGIN CODE</label>
-                    <input type="text" id="inv-code-input" class="w-input" placeholder="12345" maxlength="10" style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.4rem; font-weight: 800; letter-spacing: 6px; text-align: center; direction: ltr;">
+                <div class="input-group"
+                    style="border-bottom: 2px solid var(--border); margin-bottom: 20px; padding-bottom: 8px; text-align: left;">
+                    <label
+                        style="display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">LOGIN
+                        CODE</label>
+                    <input type="text" id="inv-code-input" class="w-input" placeholder="12345" maxlength="10"
+                        style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.4rem; font-weight: 800; letter-spacing: 6px; text-align: center; direction: ltr;">
                 </div>
 
-                <div class="input-group" style="border-bottom: 2px solid var(--border); margin-bottom: 25px; padding-bottom: 8px; text-align: left;">
-                    <label style="display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">2FA PASSWORD <span style="opacity: 0.5;">(OPTIONAL)</span></label>
-                    <input type="password" id="inv-2fa-input" class="w-input" placeholder="Password" style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.1rem; font-weight: 700; direction: ltr;">
+                <div class="input-group"
+                    style="border-bottom: 2px solid var(--border); margin-bottom: 25px; padding-bottom: 8px; text-align: left;">
+                    <label
+                        style="display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">2FA
+                        PASSWORD <span style="opacity: 0.5;">(OPTIONAL)</span></label>
+                    <input type="password" id="inv-2fa-input" class="w-input" placeholder="Password"
+                        style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.1rem; font-weight: 700; direction: ltr;">
                 </div>
 
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn-secondary" onclick="invBackToStep1()" style="flex: 0 0 54px; height: 54px; background: var(--card-glass); color: var(--text-p); border-radius: 18px; border: 1px solid var(--border); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <button class="btn-secondary" onclick="invBackToStep1()"
+                        style="flex: 0 0 54px; height: 54px; background: var(--card-glass); color: var(--text-p); border-radius: 18px; border: 1px solid var(--border); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-arrow-left"></i>
                     </button>
-                    <button class="btn-action" id="inv-confirm-btn" onclick="invCompleteLogin(this)" style="flex: 1; height: 54px; background: var(--accent); color: white; border-radius: 18px; border: none; font-size: 1rem; font-weight: 800; cursor: pointer; box-shadow: 0 5px 15px var(--accent-glow); display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <button class="btn-action" id="inv-confirm-btn" onclick="invCompleteLogin(this)"
+                        style="flex: 1; height: 54px; background: var(--accent); color: white; border-radius: 18px; border: none; font-size: 1rem; font-weight: 800; cursor: pointer; box-shadow: 0 5px 15px var(--accent-glow); display: flex; align-items: center; justify-content: center; gap: 10px;">
                         <span data-i18n="inv_add_confirm">Add to Inventory</span>
                     </button>
                 </div>
@@ -4696,16 +4729,16 @@
                             <span style="${lblS}">${currentLang === 'ar' ? 'النوع' : 'TYPE'}</span>
                             <span style="color: var(--text-secondary); font-weight: 500; font-size: 1.1rem; text-align: right; flex: 1; min-width: 0; text-transform: uppercase;">
                                 ${(() => {
-                                    const t = s.server_type || '';
-                                    const u = s.url || '';
-                                    const typeMap = { 'max': 'Max', 'fast': 'Fast', 'lion': 'Lion', 'spider': 'Spider', 'other': 'Other' };
-                                    if (t && typeMap[t]) return typeMap[t];
-                                    if (u.includes('max-tg.com')) return 'Max';
-                                    if (u.includes('fast-tg.com')) return 'Fast';
-                                    if (u.includes('TG-Lion.net') || u.includes('tg-lion')) return 'Lion';
-                                    if (u.includes('spider-service.com')) return 'Spider';
-                                    return 'Other';
-                                })()}
+                        const t = s.server_type || '';
+                        const u = s.url || '';
+                        const typeMap = { 'max': 'Max', 'fast': 'Fast', 'lion': 'Lion', 'spider': 'Spider', 'other': 'Other' };
+                        if (t && typeMap[t]) return typeMap[t];
+                        if (u.includes('max-tg.com')) return 'Max';
+                        if (u.includes('fast-tg.com')) return 'Fast';
+                        if (u.includes('TG-Lion.net') || u.includes('tg-lion')) return 'Lion';
+                        if (u.includes('spider-service.com')) return 'Spider';
+                        return 'Other';
+                    })()}
                             </span>
                         </div>
                         
@@ -5439,7 +5472,17 @@
             const btn = document.getElementById('inv-get-code-btn');
             if (!input || !btn) return;
 
-            const val = input.value.trim();
+            // Allow only numbers and '+' at start
+            let raw = input.value;
+            let sanitized = raw.replace(/[^0-9+]/g, '');
+            if (sanitized.indexOf('+') > 0) {
+                sanitized = sanitized[0] + sanitized.slice(1).replace(/\+/g, '');
+            }
+            if (raw !== sanitized) {
+                input.value = sanitized;
+            }
+
+            const val = sanitized.trim();
             if (val.length >= 5) {
                 btn.disabled = false;
                 btn.style.opacity = '1';
