@@ -1056,6 +1056,9 @@ class StoreBuy(BaseModel):
 class StockLoginStart(AdminAuthRequest):
     phone: str
 
+class StockPhoneCheck(AdminAuthRequest):
+    phone: str
+
 class StockLoginComplete(AdminAuthRequest):
     phone: str
     code: str
@@ -3413,38 +3416,90 @@ async def toggle_local(data: dict):
             setting.value = "true" if enabled else "false"
         await session.commit()
         return {"status": "success"}
-@app.post("/api/admin/stock/start-login")
-async def start_login(data: StockLoginStart):
+@app.post("/api/admin/stock/check-phone")
+async def check_phone_country_price(data: StockPhoneCheck):
     if not verify_admin_auth_multi(data.init_data, data.user_id):
         raise HTTPException(status_code=403, detail="Unauthorized")
-    from services.session_manager import request_app_code
-    phone = data.phone
+    phone = data.phone.strip()
     if not phone.startswith("+"):
         phone = "+" + phone
-        
+
     try:
         parsed = phonenumbers.parse(phone)
+        if not phonenumbers.is_valid_number(parsed):
+            return {"status": "invalid", "message": "رقم هاتف غير مكتمل أو غير صحيح"}
         country_code = str(parsed.country_code)
         iso_code = phonenumbers.region_code_for_number(parsed)
         flag = get_flag_emoji(iso_code)
-        country_name = f"{flag} " + (geocoder.description_for_number(parsed, "en") or f"Code {country_code}")
-    except Exception as e:
-        logger.error(f"Phone Parse Error: {e}")
-        raise HTTPException(status_code=400, detail="رقم هاتف غير صالح")
-        
+        raw_name = geocoder.description_for_number(parsed, "en") or f"Code {country_code}"
+        country_name = f"{flag} {raw_name}"
+    except Exception:
+        return {"status": "invalid", "message": "رقم هاتف غير صالح"}
+
     async with async_session() as session:
-        # Match by both code and ISO for accurate price lookup
         stmt = select(CountryPrice).where(
             CountryPrice.country_code == country_code,
             CountryPrice.iso_code == iso_code
         )
         cp = (await session.execute(stmt)).scalar()
         if not cp:
-             # Fallback to code only
-             cp = (await session.execute(select(CountryPrice).where(CountryPrice.country_code == country_code))).scalar()
-        
-        price = cp.price if cp else 1.0
-        
+            cp = (await session.execute(select(CountryPrice).where(CountryPrice.country_code == country_code))).scalar()
+
+        if not cp or cp.price is None or cp.price <= 0:
+            return {
+                "status": "no_price",
+                "country": country_name,
+                "raw_name": raw_name,
+                "flag": flag,
+                "message": f"عذراً، هذه الدولة ({raw_name}) ليس لها سعر مضاف. يجب إضافة سعر للدولة من لوحة التحكم قبل إضافة الأرقام."
+            }
+
+        return {
+            "status": "success",
+            "country": country_name,
+            "raw_name": raw_name,
+            "flag": flag,
+            "price": cp.price
+        }
+
+@app.post("/api/admin/stock/start-login")
+async def start_login(data: StockLoginStart):
+    if not verify_admin_auth_multi(data.init_data, data.user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    from services.session_manager import request_app_code
+    phone = data.phone.strip()
+    if not phone.startswith("+"):
+        phone = "+" + phone
+
+    try:
+        parsed = phonenumbers.parse(phone)
+        if not phonenumbers.is_valid_number(parsed):
+            raise ValueError("Invalid phone format")
+        country_code = str(parsed.country_code)
+        iso_code = phonenumbers.region_code_for_number(parsed)
+        flag = get_flag_emoji(iso_code)
+        raw_name = geocoder.description_for_number(parsed, "en") or f"Code {country_code}"
+        country_name = f"{flag} {raw_name}"
+    except Exception as e:
+        logger.error(f"Phone Parse Error: {e}")
+        raise HTTPException(status_code=400, detail="رقم هاتف غير صالح، يرجى كتابة الرقم بالصيغة الدولية (+1234567...)")
+
+    async with async_session() as session:
+        stmt = select(CountryPrice).where(
+            CountryPrice.country_code == country_code,
+            CountryPrice.iso_code == iso_code
+        )
+        cp = (await session.execute(stmt)).scalar()
+        if not cp:
+            cp = (await session.execute(select(CountryPrice).where(CountryPrice.country_code == country_code))).scalar()
+
+        if not cp or cp.price is None or cp.price <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"عذراً، لم يتم إضافة سعر لـ ({raw_name}) بعد. يجب إضافة سعر لهذه الدولة أولاً قبل إضافة أرقامها."
+            )
+        price = cp.price
+
     try:
         # Use -1 as a special ID for Admin Login
         code_hash = await request_app_code(-1, phone)
@@ -3452,11 +3507,19 @@ async def start_login(data: StockLoginStart):
             "status": "success",
             "country": country_name,
             "price": price,
-            "hash": code_hash
+            "hash": code_hash,
+            "phone_code_hash": code_hash
         }
     except Exception as e:
         logger.error(f"Login Start Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        err_text = str(e)
+        if "PHONE_NUMBER_INVALID" in err_text:
+            err_text = "رقم الهاتف غير صحيح أو غير مسجل في تليجرام."
+        elif "PHONE_NUMBER_BANNED" in err_text:
+            err_text = "هذا الرقم محظور في تليجرام (Banned)."
+        elif "FLOOD" in err_text:
+            err_text = "تم تجاوز عدد المحاولات المسموحة، يرجى الانتظار قليلاً."
+        raise HTTPException(status_code=400, detail=err_text)
 
 @app.post("/api/admin/stock/complete-login")
 async def complete_login(data: StockLoginComplete):

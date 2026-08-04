@@ -2787,13 +2787,29 @@
                     the country and your reward price.</p>
 
                 <div class="input-group"
-                    style="border-bottom: 2px solid var(--border); margin-bottom: 25px; padding-bottom: 8px; text-align: left;">
+                    style="border-bottom: 2px solid var(--border); margin-bottom: 20px; padding-bottom: 8px; text-align: left;">
                     <label data-i18n="phone_number_lbl"
                         style="display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">PHONE
                         NUMBER</label>
                     <input type="tel" inputmode="tel" id="inv-phone-input" class="w-input" placeholder="+123..."
                         oninput="checkInvPhoneInput()"
                         style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.3rem; font-weight: 700; font-family: inherit; direction: ltr;">
+                </div>
+
+                <!-- Country & Price Live Detection Badge -->
+                <div id="inv-detection-area" style="display: none; margin-bottom: 20px;">
+                    <div id="inv-det-success" style="display: none; justify-content: space-between; align-items: center; background: rgba(88, 101, 242, 0.08); border: 1px solid var(--accent-glow); padding: 12px 16px; border-radius: 14px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="inv-det-flag" style="font-size: 1.5rem;">🇪🇬</span>
+                            <div id="inv-det-name" style="font-size: 0.95rem; font-weight: 700; color: var(--text-p);">Egypt</div>
+                        </div>
+                        <div id="inv-det-price" style="font-weight: 800; font-size: 1.15rem; color: var(--accent);">$0.00</div>
+                    </div>
+
+                    <div id="inv-det-error" style="display: none; align-items: center; gap: 10px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #ef4444; padding: 12px 16px; border-radius: 14px; text-align: left; font-size: 0.82rem; font-weight: 600; line-height: 1.4;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 1.2rem; flex-shrink: 0;"></i>
+                        <span id="inv-det-error-msg"></span>
+                    </div>
                 </div>
 
                 <button class="btn-action" id="inv-get-code-btn" onclick="invGetCode(this)" disabled
@@ -5467,6 +5483,8 @@
         let currentAddPhone = '';
         let currentPhoneHash = '';
 
+        let phoneCheckTimer = null;
+
         function checkInvPhoneInput() {
             const input = document.getElementById('inv-phone-input');
             const btn = document.getElementById('inv-get-code-btn');
@@ -5483,19 +5501,84 @@
             }
 
             const val = sanitized.trim();
-            if (val.length >= 5) {
-                btn.disabled = false;
-                btn.style.opacity = '1';
-                btn.style.pointerEvents = 'auto';
-                btn.style.cursor = 'pointer';
-                btn.style.boxShadow = '0 4px 14px rgba(88, 101, 242, 0.3)';
-            } else {
+            const detArea = document.getElementById('inv-detection-area');
+            const detSuccess = document.getElementById('inv-det-success');
+            const detError = document.getElementById('inv-det-error');
+
+            if (val.length < 5) {
                 btn.disabled = true;
                 btn.style.opacity = '0.45';
                 btn.style.pointerEvents = 'none';
                 btn.style.cursor = 'not-allowed';
                 btn.style.boxShadow = 'none';
+                if (detArea) detArea.style.display = 'none';
+                if (detSuccess) detSuccess.style.display = 'none';
+                if (detError) detError.style.display = 'none';
+                return;
             }
+
+            // Debounce backend country & price lookup
+            clearTimeout(phoneCheckTimer);
+            phoneCheckTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch('/api/admin/stock/check-phone', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            init_data: initData,
+                            phone: val
+                        })
+                    });
+                    const data = await res.json();
+
+                    if (data.status === 'success') {
+                        if (detArea) detArea.style.display = 'block';
+                        if (detSuccess) detSuccess.style.display = 'flex';
+                        if (detError) detError.style.display = 'none';
+                        document.getElementById('inv-det-flag').innerText = data.flag || '🚩';
+                        document.getElementById('inv-det-name').innerText = data.raw_name || data.country;
+                        document.getElementById('inv-det-price').innerText = '$' + parseFloat(data.price).toFixed(2);
+
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'auto';
+                        btn.style.cursor = 'pointer';
+                        btn.style.boxShadow = '0 4px 14px rgba(88, 101, 242, 0.3)';
+                    } else if (data.status === 'no_price') {
+                        if (detArea) detArea.style.display = 'block';
+                        if (detSuccess) detSuccess.style.display = 'none';
+                        if (detError) detError.style.display = 'flex';
+                        document.getElementById('inv-det-error-msg').innerText = data.message;
+
+                        btn.disabled = true;
+                        btn.style.opacity = '0.45';
+                        btn.style.pointerEvents = 'none';
+                        btn.style.cursor = 'not-allowed';
+                        btn.style.boxShadow = 'none';
+                    } else {
+                        if (detArea) detArea.style.display = 'none';
+                        if (detSuccess) detSuccess.style.display = 'none';
+                        if (detError) detError.style.display = 'none';
+
+                        if (val.length >= 7) {
+                            btn.disabled = false;
+                            btn.style.opacity = '1';
+                            btn.style.pointerEvents = 'auto';
+                            btn.style.cursor = 'pointer';
+                            btn.style.boxShadow = '0 4px 14px rgba(88, 101, 242, 0.3)';
+                        } else {
+                            btn.disabled = true;
+                            btn.style.opacity = '0.45';
+                            btn.style.pointerEvents = 'none';
+                            btn.style.cursor = 'not-allowed';
+                            btn.style.boxShadow = 'none';
+                        }
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }, 300);
         }
 
         function openAddNumberModal() {
@@ -5528,7 +5611,7 @@
 
             const oldText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLang === 'ar' ? 'جاري الطلب...' : 'Sending...');
 
             try {
                 const res = await fetch('/api/admin/stock/start-login', {
@@ -5542,19 +5625,20 @@
                 });
 
                 const data = await res.json();
-                if (data.status === 'success' || data.phone_code_hash) {
+                if (res.ok && (data.status === 'success' || data.phone_code_hash || data.hash)) {
                     currentAddPhone = phone;
-                    currentPhoneHash = data.phone_code_hash;
+                    currentPhoneHash = data.phone_code_hash || data.hash;
                     document.getElementById('inv-step-1').style.display = 'none';
                     document.getElementById('inv-step-2').style.display = 'block';
                     document.getElementById('inv-step2-label').innerText = (currentLang === 'ar' ? 'تم إرسال الكود إلى الرقم: ' : 'Code sent to: ') + phone;
-                    showToast(currentLang === 'ar' ? 'نجاح' : 'Success', currentLang === 'ar' ? 'تم إرسال كود التحقق' : 'Code requested successfully', 'success');
+                    showToast(currentLang === 'ar' ? 'نجاح' : 'Success', currentLang === 'ar' ? 'تم إرسال كود التحقق بنجاح' : 'Code requested successfully', 'success');
                 } else {
-                    showToast(currentLang === 'ar' ? 'خطأ' : 'Error', data.detail || data.message || 'Failed to request code', 'error');
+                    const errDetail = data.detail || data.message || (currentLang === 'ar' ? 'فشل إرسال كود التحقق. يرجى التأكد من الرقم' : 'Failed to request code');
+                    showToast(currentLang === 'ar' ? 'خطأ في الطلب' : 'Request Error', errDetail, 'error');
                 }
             } catch (e) {
                 console.error(e);
-                showToast(currentLang === 'ar' ? 'خطأ' : 'Error', 'Connection error', 'error');
+                showToast(currentLang === 'ar' ? 'خطأ' : 'Error', currentLang === 'ar' ? 'حدث خطأ أثناء الاتصال بالخادم' : 'Connection error', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = oldText;
