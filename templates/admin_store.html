@@ -5687,6 +5687,11 @@
                             <span style="color: var(--text-secondary); opacity: 0.7; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; flex-shrink: 0;">Number</span>
                             <span style="color: var(--text-secondary); font-weight: 500; font-size: 1.05rem; text-align: right; direction: ltr; font-family: monospace; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.phone}</span>
                         </div>
+                        <!-- 2FA -->
+                        <div onclick="${item.two_fa ? `copyToClipboard('${item.two_fa}')` : ''}" title="${item.two_fa ? 'Click to copy 2FA password' : 'No 2FA set'}" style="background: ${item.two_fa ? 'rgba(245, 158, 11, 0.04)' : 'rgba(239, 68, 68, 0.03)'}; border: 1px solid ${item.two_fa ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.1)'}; padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 20px; cursor: ${item.two_fa ? 'pointer' : 'default'}; transition: all 0.2s;">
+                            <span style="color: var(--text-secondary); opacity: 0.7; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; flex-shrink: 0;"><i class="fas fa-lock" style="margin-right:5px; font-size:0.75rem;"></i>2FA</span>
+                            <span style="color: ${item.two_fa ? 'var(--text-secondary)' : '#ef4444'}; font-weight: ${item.two_fa ? '600' : '500'}; font-size: ${item.two_fa ? '1rem' : '0.9rem'}; text-align: right; font-family: monospace; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.two_fa || 'Not Set'}</span>
+                        </div>
                         <!-- Price -->
                         <div style="background: rgba(139, 92, 246, 0.02); border: 1px solid rgba(139, 92, 246, 0.08); padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 20px;">
                             <span style="color: var(--text-secondary); opacity: 0.7; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; flex-shrink: 0;">Price</span>

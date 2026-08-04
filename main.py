@@ -3978,6 +3978,7 @@ async def get_stock_inventory(user_id: int, init_data: str, page: int = 1, limit
                     "country": acc.country,
                     "flag": flag,
                     "price": acc.price,
+                    "two_fa": acc.two_fa_password or None,
                     "created_at": acc.created_at.isoformat() if acc.created_at else None
                 })
 
