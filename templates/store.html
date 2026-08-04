@@ -74,8 +74,8 @@
 
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
         }
 
         ::-webkit-scrollbar-track {
@@ -85,6 +85,8 @@
         ::-webkit-scrollbar-thumb {
             background: var(--accent-purple);
             border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
         }
 
         * {
