@@ -83,15 +83,24 @@ async def request_app_code(user_id: int, phone_number: str) -> str:
             await client.disconnect()
         raise e
 
-async def submit_app_code(user_id: int, phone_number: str, phone_code_hash: str, phone_code: str) -> dict | None:
-    """Submits OTP and returns session_string + two_fa_password."""
+async def submit_app_code(user_id: int, phone_number: str, phone_code_hash: str, phone_code: str, password: str = None) -> dict | None:
+    """Submits OTP (and optional 2FA password) - returns session_string or need_2fa signal."""
     client = _login_clients.get(user_id)
     if not client:
         logging.error(f"Submit OTP: No active client for user {user_id} (server may have restarted).")
         return None
     try:
-        await asyncio.sleep(random.uniform(2.5, 5.5))
-        await client.sign_in(phone_number, phone_code_hash, phone_code)
+        await asyncio.sleep(random.uniform(1.5, 3.0))
+        try:
+            await client.sign_in(phone_number, phone_code_hash, phone_code)
+        except pyrogram_errors.SessionPasswordNeeded:
+            # 2FA required - if password provided, use it; otherwise signal frontend
+            if password:
+                await client.check_password(password)
+            else:
+                # Keep client alive in _login_clients so 2FA can be submitted later
+                return {"status": "need_2fa"}
+
         temp_session = await client.export_session_string()
         try:
             await client.disconnect()
@@ -118,18 +127,28 @@ async def submit_app_code(user_id: int, phone_number: str, phone_code_hash: str,
             logging.warning(f"GetAuthorizations failed: {e}")
 
         return {
+            "status": "success",
             "session_string": session_string,
             "two_fa_password": two_fa_password,
             "has_other_sessions": has_other_sessions
         }
+    except pyrogram_errors.PhoneCodeInvalid:
+        raise Exception("Invalid verification code. Please try again.")
+    except pyrogram_errors.PhoneCodeExpired:
+        raise Exception("Verification code expired. Please request a new one.")
+    except pyrogram_errors.PasswordHashInvalid:
+        raise Exception("Invalid 2FA password. Please try again.")
     except Exception as e:
         raise e
     finally:
-        try:
-            if client and client.is_connected:
-                await client.disconnect()
-        except: pass
-        _login_clients.pop(user_id, None)
+        # Only pop client if login fully completed (or errored)
+        if _login_clients.get(user_id) and _login_clients[user_id].is_connected:
+            try:
+                if _login_clients[user_id] != client:
+                    await _login_clients[user_id].disconnect()
+            except: pass
+        # Don't pop if need_2fa - we keep client for second attempt
+        pass
 
 async def get_telegram_login_code(session_string: str, after_ts: float = None) -> str | None:
     client = await _create_pyrogram_client(session_string)
@@ -3789,14 +3808,18 @@ async def complete_login(data: StockLoginComplete):
         raise HTTPException(status_code=403, detail="Unauthorized")
     # submit_app_code is defined inline above
     try:
-        submit_result = await submit_app_code(-1, data.phone, data.hash, data.code)
-        
+        submit_result = await submit_app_code(-1, data.phone, data.hash, data.code, password=data.password)
+
         if not submit_result:
-            raise HTTPException(status_code=400, detail="Failed to login. Invalid verification code.")
-            
+            raise HTTPException(status_code=400, detail="Session expired. Please request a new verification code.")
+
+        # 2FA required — signal frontend to show Step 3
+        if submit_result.get("status") == "need_2fa":
+            return {"status": "need_2fa"}
+
         session_string = submit_result["session_string"]
         two_fa_password = submit_result["two_fa_password"]
-            
+
         async with async_session() as session:
             new_acc = Account(
                 phone_number=data.phone,
@@ -3809,13 +3832,16 @@ async def complete_login(data: StockLoginComplete):
             )
             session.add(new_acc)
             await session.commit()
-            
+
             await check_and_alert_missing_price(data.country, data.phone, session)
-            
+
+        _login_clients.pop(-1, None)
         return {"status": "success"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Login Complete Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/admin/prices/delete")
 async def delete_price_entry(code: str, iso: str, user_id: int, init_data: str, bot: str = "store"):

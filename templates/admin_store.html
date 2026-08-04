@@ -2840,15 +2840,6 @@
                         style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.4rem; font-weight: 800; letter-spacing: 6px; text-align: center; direction: ltr;">
                 </div>
 
-                <div class="input-group"
-                    style="border-bottom: 2px solid var(--border); margin-bottom: 25px; padding-bottom: 8px; text-align: left;">
-                    <label
-                        style="display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">2FA
-                        PASSWORD <span style="opacity: 0.5;">(OPTIONAL)</span></label>
-                    <input type="password" id="inv-2fa-input" class="w-input" placeholder="Password"
-                        style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.1rem; font-weight: 700; direction: ltr;">
-                </div>
-
                 <div style="display: flex; gap: 10px;">
                     <button class="btn-secondary" onclick="invBackToStep1()"
                         style="flex: 0 0 54px; height: 54px; background: var(--card-glass); color: var(--text-p); border-radius: 18px; border: 1px solid var(--border); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">
@@ -2859,6 +2850,31 @@
                         <span data-i18n="inv_add_confirm">Add to Inventory</span>
                     </button>
                 </div>
+            </div>
+
+            <!-- Step 3: 2FA Password -->
+            <div id="inv-step-3" style="display: none;">
+                <div class="w-icon"
+                    style="width: 70px; height: 70px; margin: 10px auto 20px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h2 class="w-title"
+                    style="font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; color: var(--text-p);">Two-Step Verification</h2>
+                <p class="w-desc"
+                    style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5;">This account requires a two-step verification password.</p>
+
+                <div class="input-group"
+                    style="border-bottom: 2px solid var(--border); margin-bottom: 25px; padding-bottom: 8px; text-align: left;">
+                    <label
+                        style="display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">2FA PASSWORD</label>
+                    <input type="password" id="inv-2fa-input" class="w-input" placeholder="Enter password"
+                        style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.1rem; font-weight: 700; direction: ltr;">
+                </div>
+
+                <button class="btn-action" id="inv-2fa-btn" onclick="invSubmit2FA(this)"
+                    style="width: 100%; height: 54px; background: #ef4444; color: white; border-radius: 18px; border: none; font-size: 1rem; font-weight: 800; cursor: pointer; box-shadow: 0 5px 15px rgba(239,68,68,0.3); display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <i class="fas fa-unlock"></i> <span>Verify &amp; Add to Inventory</span>
+                </button>
             </div>
         </div>
     </div>
@@ -5618,6 +5634,7 @@
         function openAddNumberModal() {
             document.getElementById('inv-step-1').style.display = 'block';
             document.getElementById('inv-step-2').style.display = 'none';
+            document.getElementById('inv-step-3').style.display = 'none';
             document.getElementById('inv-phone-input').value = '';
             document.getElementById('inv-code-input').value = '';
             document.getElementById('inv-2fa-input').value = '';
@@ -5633,6 +5650,7 @@
         function invBackToStep1() {
             document.getElementById('inv-step-1').style.display = 'block';
             document.getElementById('inv-step-2').style.display = 'none';
+            document.getElementById('inv-step-3').style.display = 'none';
             checkInvPhoneInput();
         }
 
@@ -5664,6 +5682,8 @@
                     currentPhoneHash = data.phone_code_hash || data.hash;
                     document.getElementById('inv-step-1').style.display = 'none';
                     document.getElementById('inv-step-2').style.display = 'block';
+                    document.getElementById('inv-step-3').style.display = 'none';
+                    document.getElementById('inv-code-input').value = '';
                     document.getElementById('inv-step2-label').innerText = 'Code sent to: ' + phone;
                     showToast('Success', 'Verification code sent successfully', 'success');
                 } else {
@@ -5708,16 +5728,72 @@
                 });
 
                 const data = await res.json();
-                if (data.status === 'success') {
-                    showToast(currentLang === 'ar' ? 'تم الإضافة' : 'Success', currentLang === 'ar' ? 'تمت إضافة الرقم بنجاح' : 'Number added to inventory', 'success');
+                if (res.ok && data.status === 'need_2fa') {
+                    // Switch to Step 3 for 2FA
+                    document.getElementById('inv-step-2').style.display = 'none';
+                    document.getElementById('inv-step-3').style.display = 'block';
+                    document.getElementById('inv-2fa-input').value = '';
+                    document.getElementById('inv-2fa-input').focus();
+                    showToast('2FA Required', 'Enter your two-step verification password', 'error');
+                } else if (res.ok && data.status === 'success') {
+                    showToast('Success', 'Number added to inventory', 'success');
                     closeAddNumberModal(true);
                     fetchInventory(1, '');
                 } else {
-                    showToast(currentLang === 'ar' ? 'خطأ' : 'Error', data.detail || data.message || 'Failed to add number', 'error');
+                    showToast('Error', data.detail || data.message || 'Failed to add number', 'error');
                 }
             } catch (e) {
                 console.error(e);
-                showToast(currentLang === 'ar' ? 'خطأ' : 'Error', 'Connection error', 'error');
+                showToast('Error', 'Connection error', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = oldText;
+            }
+        }
+
+        async function invSubmit2FA(btn) {
+            const password = document.getElementById('inv-2fa-input').value.trim();
+            if (!password) {
+                showToast('Alert', 'Please enter 2FA password', 'error');
+                return;
+            }
+
+            const oldText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+            try {
+                const detBadge = document.getElementById('inv-det-success');
+                const detPrice = document.getElementById('inv-det-price');
+                const countryVal = document.getElementById('inv-det-name')?.innerText || 'Manual Add';
+                const priceVal = detPrice ? parseFloat(detPrice.innerText.replace('$','')) || 0 : 0;
+
+                const res = await fetch('/api/admin/stock/complete-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        init_data: initData,
+                        phone: currentAddPhone,
+                        hash: currentPhoneHash,
+                        code: document.getElementById('inv-code-input').value.trim(),
+                        password: password,
+                        country: countryVal,
+                        price: priceVal
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    showToast('Success', 'Number added to inventory', 'success');
+                    closeAddNumberModal(true);
+                    fetchInventory(1, '');
+                } else {
+                    showToast('Error', data.detail || data.message || 'Invalid 2FA password', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('Error', 'Connection error', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = oldText;
