@@ -2828,7 +2828,7 @@
                     style="font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; color: var(--text-p);"
                     data-i18n="verify_login_title">Verify Login</h2>
                 <p id="inv-step2-label" class="w-desc"
-                    style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5;">Enter the verification code sent to Telegram.</p>
+                    style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5;">Enter the 5-digit code sent to your Telegram account.</p>
 
                 <div class="input-group"
                     style="border-bottom: 2px solid var(--border); margin-bottom: 20px; padding-bottom: 8px; text-align: left;">
@@ -2853,7 +2853,7 @@
                 <h2 class="w-title"
                     style="font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; color: var(--text-p);">Two-Step Verification</h2>
                 <p class="w-desc"
-                    style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5;">This account requires a two-step verification password.</p>
+                    style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 25px; line-height: 1.5;">This account is protected by a password. Please enter your password to continue.</p>
 
                 <div class="input-group"
                     style="border-bottom: 2px solid var(--border); margin-bottom: 25px; padding-bottom: 8px; text-align: left; position: relative;">
@@ -5670,8 +5670,13 @@
             document.getElementById('inv-step-2').style.display = 'none';
             document.getElementById('inv-step-3').style.display = 'none';
             document.getElementById('inv-step-error').style.display = 'none';
+            document.getElementById('inv-phone-input').value = '';
             document.getElementById('inv-code-input').value = '';
             document.getElementById('inv-2fa-input').value = '';
+            const detArea = document.getElementById('inv-detection-area');
+            const detSuccess = document.getElementById('inv-det-success');
+            if (detArea) detArea.style.display = 'none';
+            if (detSuccess) detSuccess.style.display = 'none';
             checkInvPhoneInput();
         }
 
@@ -5726,7 +5731,6 @@
                     document.getElementById('inv-step-3').style.display = 'none';
                     document.getElementById('inv-code-input').value = '';
                     document.getElementById('inv-step2-label').innerText = 'Code sent to: ' + phone;
-                    showToast('Success', 'Verification code sent successfully', 'success');
                 } else {
                     const errDetail = data.detail || data.message || 'Failed to request code';
                     showToast('Request Error', errDetail, 'error');
@@ -5780,7 +5784,7 @@
                     closeAddNumberModal(true);
                     fetchInventory(1, '');
                 } else {
-                    const errMsg = data?.detail || data?.message || 'Verification failed. Please try again.';
+                    const errMsg = data?.detail || data?.message || 'Invalid verification code. Please try again.';
                     showInvError(errMsg);
                 }
             } catch (e) {
