@@ -3988,7 +3988,7 @@ async def get_stock_inventory(user_id: int, init_data: str, page: int = 1, limit
         if search:
             country_q = country_q.where(Account.country.ilike(f"%{search}%"))
 
-        country_q = country_q.group_by(Account.country).order_by(func.count(Account.id).desc())
+        country_q = country_q.group_by(Account.country).order_by(func.max(Account.id).desc())
         res_countries = (await session.execute(country_q)).all()
 
         countries_list = []
