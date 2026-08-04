@@ -2268,14 +2268,14 @@
 
             <!-- ===== Dedicated Country Numbers Page (Level 2) ===== -->
             <section id="section-inventory-country" class="view-section">
-                <!-- Toolbar (85% Search Bar + 15% Purple Gradient Back Button) -->
-                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; width: 100%;">
+                <!-- Toolbar (Purple Gradient Back Button + Search Bar) -->
+                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px; width: 100%;">
                     <button onclick="switchNav('inventory', null, true)"
-                        style="flex: 0 0 calc(15% - 5px); width: calc(15% - 5px); height: 54px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #5865F2, #8b5cf6) !important; border: 1px solid rgba(139, 92, 246, 0.4); border-radius: 16px; color: #ffffff !important; cursor: pointer; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.35); flex-shrink: 0; transition: all 0.2s;">
+                        style="flex: 0 0 72px; width: 72px; height: 54px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #5865F2, #8b5cf6) !important; border: 1px solid rgba(139, 92, 246, 0.4); border-radius: 16px; color: #ffffff !important; cursor: pointer; font-size: 1.25rem; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.35); flex-shrink: 0; transition: all 0.2s; box-sizing: border-box;">
                         <i class="fas fa-arrow-left" style="color: #ffffff !important; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; line-height: 1;"></i>
                     </button>
                     <div
-                        style="flex: 0 0 calc(85% - 5px); width: calc(85% - 5px); height: 54px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); box-sizing: border-box;">
+                        style="flex: 1; height: 54px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); box-sizing: border-box;">
                         <i class="fas fa-search" style="color: var(--text-s); font-size: 0.95rem; opacity: 0.7;"></i>
                         <input type="text" id="country-num-search" placeholder="Search phone number..."
                             oninput="searchCountryNumbers()"
@@ -5543,6 +5543,17 @@
                 const data = await res.json();
 
                 cNumTotalPages = data.pages || 1;
+                const titleEl = document.getElementById('country-page-title');
+                if (titleEl) {
+                    titleEl.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span>${currentCountryFlag}</span>
+                            <span>${currentCountryName}</span>
+                            <span style="background: rgba(139, 92, 246, 0.12); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.25); padding: 4px 12px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; font-family: monospace;">
+                                ${data.total || 0}
+                            </span>
+                        </div>`;
+                }
                 renderCountryNumbersList(data.items || []);
 
                 const pag = document.getElementById('country-num-pagination');
