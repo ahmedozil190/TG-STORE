@@ -2759,44 +2759,58 @@
     </div>
 
     <!-- ===== Add Number Modal ===== -->
-    <div id="add-number-modal" class="modal-overlay" onclick="closeAddNumberModal(event)">
-        <div class="modal-card" onclick="event.stopPropagation()" style="max-width: 420px;">
-            <h3 id="add-number-modal-title" data-i18n="inv_add_title">Add Number to Inventory</h3>
+    <div id="add-number-modal" class="modal-overlay">
+        <div class="modal-card" onclick="event.stopPropagation()" style="max-width: 420px; padding: 24px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+
+            <!-- Header with Title & Close X Button -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 14px;">
+                <h3 id="add-number-modal-title" style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-p);" data-i18n="inv_add_title">Add New Number</h3>
+                <button onclick="closeAddNumberModal(true)" type="button" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-secondary); width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;">
+                    <i class="fas fa-times" style="font-size: 0.9rem;"></i>
+                </button>
+            </div>
 
             <!-- Step 1: Phone -->
             <div id="inv-step-1">
-                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;" data-i18n="inv_step1">Step 1: Enter Phone</p>
-                <div class="form-group">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary); opacity: 0.7; font-weight: 500; text-transform: uppercase; margin-bottom: 8px; display: block;">PHONE NUMBER</label>
-                    <input type="tel" id="inv-phone-input" class="form-control" data-i18n-placeholder="inv_phone_ph" placeholder="Phone number (e.g. +1234567890)" style="direction: ltr;">
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(99, 102, 241, 0.1); color: var(--accent); padding: 6px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; margin-bottom: 18px;">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span data-i18n="inv_step1">Step 1: Enter Phone</span>
                 </div>
-                <button class="primary-btn" id="inv-get-code-btn" onclick="invGetCode(this)" style="width: 100%; margin-top: 8px;">
-                    <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; display: block;">PHONE NUMBER</label>
+                    <input type="tel" id="inv-phone-input" class="input-field" data-i18n-placeholder="inv_phone_ph" placeholder="Phone number (e.g. +1234567890)" style="direction: ltr; width: 100%; box-sizing: border-box; font-weight: 600; font-size: 1rem; padding: 14px 16px;">
+                </div>
+                <button class="primary-btn" id="inv-get-code-btn" onclick="invGetCode(this)" style="width: 100%; height: 48px; border-radius: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem;">
+                    <i class="fas fa-paper-plane"></i>
                     <span data-i18n="inv_get_code">Get Code</span>
                 </button>
             </div>
 
             <!-- Step 2: Code -->
             <div id="inv-step-2" style="display: none;">
-                <p id="inv-step2-label" style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;" data-i18n="inv_step2">Step 2: Enter Code</p>
-                <div class="form-group">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary); opacity: 0.7; font-weight: 500; text-transform: uppercase; margin-bottom: 8px; display: block;">LOGIN CODE</label>
-                    <input type="text" id="inv-code-input" class="form-control" data-i18n-placeholder="inv_code_ph" placeholder="Login code" style="direction: ltr; letter-spacing: 4px; font-size: 1.2rem; text-align: center;" maxlength="10">
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 6px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; margin-bottom: 18px;">
+                    <i class="fas fa-key"></i>
+                    <span id="inv-step2-label" data-i18n="inv_step2">Step 2: Enter Code</span>
                 </div>
-                <div class="form-group">
-                    <label style="font-size: 0.8rem; color: var(--text-secondary); opacity: 0.7; font-weight: 500; text-transform: uppercase; margin-bottom: 8px; display: block;">2FA PASSWORD <span style="opacity: 0.5;">(OPTIONAL)</span></label>
-                    <input type="password" id="inv-2fa-input" class="form-control" data-i18n-placeholder="inv_2fa_ph" placeholder="2FA password (if any)" style="direction: ltr;">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; display: block;">LOGIN CODE</label>
+                    <input type="text" id="inv-code-input" class="input-field" data-i18n-placeholder="inv_code_ph" placeholder="Login code" style="direction: ltr; letter-spacing: 6px; font-size: 1.3rem; font-weight: 800; text-align: center; width: 100%; box-sizing: border-box; padding: 14px 16px;" maxlength="10">
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 8px;">
-                    <button class="primary-btn" onclick="invBackToStep1()" style="flex: 0 0 auto; background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border); box-shadow: none; padding: 14px 16px;">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; display: block;">2FA PASSWORD <span style="opacity: 0.5;">(OPTIONAL)</span></label>
+                    <input type="password" id="inv-2fa-input" class="input-field" data-i18n-placeholder="inv_2fa_ph" placeholder="2FA password (if any)" style="direction: ltr; width: 100%; box-sizing: border-box; padding: 14px 16px;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="primary-btn" onclick="invBackToStep1()" style="flex: 0 0 48px; width: 48px; height: 48px; background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border); box-shadow: none; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 14px;">
                         <i class="fas fa-arrow-left"></i>
                     </button>
-                    <button class="primary-btn" id="inv-confirm-btn" onclick="invCompleteLogin(this)" style="flex: 1;">
-                        <i class="fas fa-plus-circle" style="margin-right: 8px;"></i>
+                    <button class="primary-btn" id="inv-confirm-btn" onclick="invCompleteLogin(this)" style="flex: 1; height: 48px; border-radius: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class="fas fa-plus-circle"></i>
                         <span data-i18n="inv_add_confirm">Add to Inventory</span>
                     </button>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -3056,7 +3070,7 @@
                 inv_countries: "Total Countries",
                 inv_lowest_price: "Lowest Price",
                 inv_add_btn: "Add Number",
-                inv_add_title: "Add Number to Inventory",
+                inv_add_title: "Add New Number",
                 inv_step1: "Step 1: Enter Phone",
                 inv_step2: "Step 2: Enter Code",
                 inv_phone_ph: "Phone number (e.g. +1234567890)",
@@ -3132,7 +3146,7 @@
                 inv_countries: "إجمالي الدول",
                 inv_lowest_price: "أقل سعر",
                 inv_add_btn: "إضافة رقم",
-                inv_add_title: "إضافة رقم للمخزن",
+                inv_add_title: "إضافة رقم جديد",
                 inv_step1: "الخطوة 1: أدخل الرقم",
                 inv_step2: "الخطوة 2: أدخل الكود",
                 inv_phone_ph: "رقم الهاتف (مثل +1234567890)",
@@ -5417,8 +5431,8 @@
             document.getElementById('add-number-modal').classList.add('active');
         }
 
-        function closeAddNumberModal(e) {
-            if (e && e.target !== document.getElementById('add-number-modal')) return;
+        function closeAddNumberModal(force = false) {
+            if (!force) return;
             document.getElementById('add-number-modal').classList.remove('active');
         }
 
@@ -5500,7 +5514,7 @@
                 const data = await res.json();
                 if (data.status === 'success') {
                     showToast(currentLang === 'ar' ? 'تم الإضافة' : 'Success', currentLang === 'ar' ? 'تمت إضافة الرقم بنجاح' : 'Number added to inventory', 'success');
-                    closeAddNumberModal();
+                    closeAddNumberModal(true);
                     fetchInventory(1, '');
                 } else {
                     showToast(currentLang === 'ar' ? 'خطأ' : 'Error', data.detail || data.message || 'Failed to add number', 'error');
