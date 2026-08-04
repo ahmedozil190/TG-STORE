@@ -2516,6 +2516,32 @@
                 if (data.user) {
                     window.lastDashboardData = data;
                     renderDashboardStats();
+
+                    // Update Referral Program Settings
+                    const refBonusValEl = document.getElementById('ref-join-bonus-val');
+                    const refCommValEl = document.getElementById('ref-commission-val');
+                    if (refBonusValEl && data.referral_join_bonus !== undefined) {
+                        refBonusValEl.innerText = `$${formatMoney(data.referral_join_bonus, 3)}`;
+                    }
+                    if (refCommValEl && data.referral_commission_percent !== undefined) {
+                        refCommValEl.innerText = `${data.referral_commission_percent}%`;
+                    }
+
+                    // Update Store Stats
+                    const tNum = document.getElementById('stat-total-numbers');
+                    if (tNum) tNum.innerHTML = `${data.total_numbers || 0}&nbsp;<span>${translations[currentLang].unit_numbers}</span>`;
+                    const cNum = document.getElementById('stat-countries');
+                    if (cNum) cNum.innerHTML = `${(data.countries || []).length}&nbsp;<span>${translations[currentLang].unit_countries}</span>`;
+                    const lPrice = document.getElementById('stat-lowest-price');
+                    if (lPrice) lPrice.innerHTML = `${formatMoney(data.lowest_price || 0)}&nbsp;<span>${translations[currentLang].unit_usd}</span>`;
+
+                    if (data.deposit_methods) {
+                        depositMethods = data.deposit_methods;
+                        const currentBtn = document.querySelector('#section-deposit .tab-btn.active');
+                        if (typeof switchDepositMethod === 'function') {
+                            switchDepositMethod(currentDepositMethod || 'binance_pay', currentBtn);
+                        }
+                    }
                 }
             } catch (e) {
                 console.error("Silent user refresh error:", e);
@@ -2546,10 +2572,17 @@
             // Persist for refresh
             sessionStorage.setItem('activeTab', id);
 
-            if (id === 'home') refreshDashboardDataSilently();
+            refreshDashboardDataSilently();
             if (id === 'store') fetchCountries();
             if (id === 'history') fetchHistory();
-            if (id === 'deposit') fetchDeposits();
+            if (id === 'deposit') {
+                fetchDeposits();
+                // Reset deposit method selection to default (binance_pay)
+                const firstTabBtn = document.querySelector('#section-deposit .tab-btn');
+                if (typeof switchDepositMethod === 'function') {
+                    switchDepositMethod('binance_pay', firstTabBtn);
+                }
+            }
 
             // Clear deposit input on navigation
             const txInput = document.getElementById('deposit-txid');
