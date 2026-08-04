@@ -3496,6 +3496,22 @@
             else if (id === 'store-user-prices') fetchStoreUserPrices();
             else if (id === 'settings-subscriptions') fetchSubscriptionChannels();
             else if (id === 'inventory') { fetchInventory(); }
+            else if (id === 'inventory-country') {
+                // Restore country data from sessionStorage if available
+                const savedCountry = sessionStorage.getItem('last_country_name');
+                const savedFlag = sessionStorage.getItem('last_country_flag') || '🌐';
+                if (savedCountry) {
+                    currentCountryName = savedCountry;
+                    currentCountryFlag = savedFlag;
+                    const titleEl = document.getElementById('country-page-title');
+                    if (titleEl) titleEl.innerHTML = `<span>${savedFlag}</span> <span>${savedCountry}</span>`;
+                    fetchCountryNumbers(1, '');
+                } else {
+                    // No country stored, fall back to inventory
+                    switchNav('inventory', null, true);
+                    return;
+                }
+            }
 
             // 5. Reset scroll BEFORE showing the section
             const scroller = document.getElementById('app-content-scroller');
@@ -5602,6 +5618,9 @@
         function openCountryPage(countryName, flag = '🌐') {
             currentCountryName = countryName;
             currentCountryFlag = flag;
+            // Persist so page refresh restores correctly
+            sessionStorage.setItem('last_country_name', countryName);
+            sessionStorage.setItem('last_country_flag', flag);
             cNumPage = 1;
             cNumSearchQuery = '';
             const searchInput = document.getElementById('country-num-search');
