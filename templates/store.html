@@ -134,13 +134,14 @@
             width: 44px;
             height: 44px;
             border-radius: 12px;
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--accent), var(--accent-purple));
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            border: 1px solid var(--border);
+            border: 1px solid var(--accent-glow);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
         }
 
         .sidebar {
@@ -212,24 +213,23 @@
             cursor: pointer;
             transition: all 0.2s;
             box-sizing: border-box;
-            outline: none;
             border: 1px solid transparent;
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .nav-item:hover,
-        .nav-item.active {
+        .nav-item:hover {
             background: var(--card-glass);
             color: var(--text-p);
         }
 
-        .nav-item.active {
-            color: var(--accent);
-        }
-
+        .nav-item.active,
+        .nav-item:focus,
         .nav-item:active {
-            border: 1px solid var(--accent);
-            box-shadow: 0 0 12px var(--accent-glow);
-            transform: scale(0.98);
+            background: var(--card-glass);
+            border: 1px solid var(--accent-purple) !important;
+            color: var(--accent-purple);
+            outline: none !important;
         }
 
         .side-brand {
@@ -242,8 +242,8 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 10px var(--accent);
+            background: linear-gradient(135deg, var(--accent), var(--accent-purple));
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
         }
 
         .side-brand-name {
