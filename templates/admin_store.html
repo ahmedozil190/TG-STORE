@@ -5492,9 +5492,9 @@
 
             if (!countries || countries.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 40px 20px; opacity: 0.5;">
-                        <i class="fas fa-boxes" style="font-size: 2.5rem; margin-bottom: 12px; display: block;"></i>
-                        <p style="font-weight: 600;">${translations[currentLang].inv_empty || 'No numbers in inventory'}</p>
+                    <div style="text-align: center; padding: 40px 20px; background: var(--card-glass); border-radius: 16px; border: 1px dashed var(--border); margin-top: 0; backdrop-filter: blur(10px);">
+                        <i class="fas fa-boxes" style="font-size: 2.5rem; color: var(--text-secondary); opacity: 0.15; margin-bottom: 12px; display: block;"></i>
+                        <p style="color: var(--text-secondary); font-weight: 600; font-size: 0.95rem;">${translations[currentLang].inv_empty || 'No numbers in inventory'}</p>
                     </div>`;
                 return;
             }
@@ -5583,9 +5583,9 @@
 
             if (!items || items.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 40px 20px; opacity: 0.5;">
-                        <i class="fas fa-sim-card" style="font-size: 2.5rem; margin-bottom: 12px; display: block;"></i>
-                        <p style="font-weight: 600;">No numbers found for this country</p>
+                    <div style="text-align: center; padding: 40px 20px; background: var(--card-glass); border-radius: 16px; border: 1px dashed var(--border); margin-top: 0; backdrop-filter: blur(10px);">
+                        <i class="fas fa-sim-card" style="font-size: 2.5rem; color: var(--text-secondary); opacity: 0.15; margin-bottom: 12px; display: block;"></i>
+                        <p style="color: var(--text-secondary); font-weight: 600; font-size: 0.95rem;">${currentLang === 'ar' ? 'لا توجد أرقام متاحة لهذه الدولة' : 'No numbers found for this country'}</p>
                     </div>`;
                 return;
             }
