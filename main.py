@@ -3604,9 +3604,9 @@ async def get_stock_inventory(user_id: int, init_data: str, page: int = 1, limit
         total_countries = (await session.execute(
             select(func.count(func.distinct(Account.country))).where(Account.status == AccountStatus.AVAILABLE, Account.server_id == None)
         )).scalar() or 0
-        last_added = (await session.execute(
-            select(Account.created_at).where(Account.status == AccountStatus.AVAILABLE, Account.server_id == None).order_by(Account.id.desc()).limit(1)
-        )).scalar()
+        lowest_price = (await session.execute(
+            select(func.min(Account.price)).where(Account.status == AccountStatus.AVAILABLE, Account.server_id == None)
+        )).scalar() or 0.0
 
         return {
             "items": items,
@@ -3616,7 +3616,7 @@ async def get_stock_inventory(user_id: int, init_data: str, page: int = 1, limit
             "stats": {
                 "total_available": total_available,
                 "total_countries": total_countries,
-                "last_added": last_added.isoformat() if last_added else None
+                "lowest_price": lowest_price
             }
         }
 

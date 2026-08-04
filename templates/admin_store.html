@@ -2194,41 +2194,40 @@
             <!-- ===== Inventory Section ===== -->
             <section id="section-inventory" class="view-section">
 
-                <!-- Stats Row -->
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 22px;">
-                    <div class="info-card" style="padding: 18px 14px;">
+                <!-- Stats Cards Stacked (Under Each Other) -->
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px;">
+                    <div class="info-card" style="padding: 18px 20px;">
                         <div class="info-card-l">
                             <div class="info-card-icon" style="background: rgba(16, 185, 129, 0.12);"><i class="fas fa-phone" style="color: #10b981;"></i></div>
-                            <div class="info-card-lbl" data-i18n="inv_total_numbers">NUMBERS</div>
+                            <div class="info-card-lbl" data-i18n="inv_total_numbers">Total Numbers</div>
                         </div>
                         <div class="info-card-val" id="inv-stat-total">0</div>
                     </div>
-                    <div class="info-card" style="padding: 18px 14px;">
+                    <div class="info-card" style="padding: 18px 20px;">
                         <div class="info-card-l">
                             <div class="info-card-icon" style="background: rgba(99, 102, 241, 0.12);"><i class="fas fa-globe" style="color: #6366f1;"></i></div>
-                            <div class="info-card-lbl" data-i18n="inv_countries">COUNTRIES</div>
+                            <div class="info-card-lbl" data-i18n="inv_countries">Total Countries</div>
                         </div>
                         <div class="info-card-val" id="inv-stat-countries">0</div>
                     </div>
-                    <div class="info-card" style="padding: 18px 14px;">
+                    <div class="info-card" style="padding: 18px 20px;">
                         <div class="info-card-l">
-                            <div class="info-card-icon" style="background: rgba(245, 158, 11, 0.12);"><i class="fas fa-clock" style="color: #f59e0b;"></i></div>
-                            <div class="info-card-lbl" data-i18n="inv_last_added">LAST&nbsp;ADDED</div>
+                            <div class="info-card-icon" style="background: rgba(245, 158, 11, 0.12);"><i class="fas fa-tag" style="color: #f59e0b;"></i></div>
+                            <div class="info-card-lbl" data-i18n="inv_lowest_price">Lowest Price</div>
                         </div>
-                        <div class="info-card-val" style="font-size: 0.75rem;" id="inv-stat-last">—</div>
+                        <div class="info-card-val" id="inv-stat-lowest">$0.00</div>
                     </div>
                 </div>
 
-                <!-- Toolbar -->
-                <div style="display: flex; gap: 10px; margin-bottom: 16px; align-items: center;">
-                    <div style="flex: 1; position: relative;">
+                <!-- Toolbar (80% Search / 20% Add Button) -->
+                <div style="display: flex; gap: 10px; margin-bottom: 16px; align-items: center; width: 100%;">
+                    <div style="flex: 0 0 80%; width: 80%; position: relative; box-sizing: border-box;">
                         <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); opacity: 0.5; font-size: 0.85rem;"></i>
                         <input type="text" id="inv-search" placeholder="Search phone or country..." oninput="searchInventory()"
                             style="width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px 12px 38px; color: var(--text-p); font-size: 0.92rem; box-sizing: border-box;">
                     </div>
-                    <button onclick="openAddNumberModal()" class="primary-btn" id="btn-open-add-number" style="padding: 12px 18px; white-space: nowrap; display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <button onclick="openAddNumberModal()" class="primary-btn" id="btn-open-add-number" style="flex: 0 0 calc(20% - 10px); width: calc(20% - 10px); height: 45px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border-radius: 12px; flex-shrink: 0; box-sizing: border-box;">
                         <i class="fas fa-plus"></i>
-                        <span data-i18n="inv_add_btn">Add Number</span>
                     </button>
                 </div>
 
@@ -3046,9 +3045,9 @@
                 search_custom_users_ph: "Search for ID, Name, or Country...",
                 lbl_date: "Date",
                 nav_inventory: "Inventory",
-                inv_total_numbers: "NUMBERS",
-                inv_countries: "COUNTRIES",
-                inv_last_added: "LAST ADDED",
+                inv_total_numbers: "Total Numbers",
+                inv_countries: "Total Countries",
+                inv_lowest_price: "Lowest Price",
                 inv_add_btn: "Add Number",
                 inv_add_title: "Add Number to Inventory",
                 inv_step1: "Step 1: Enter Phone",
@@ -3122,9 +3121,9 @@
                 search_custom_users_ph: "ابحث عن المعرف أو الاسم أو الدولة...",
                 lbl_date: "التاريخ",
                 nav_inventory: "المخزون",
-                inv_total_numbers: "الأرقام",
-                inv_countries: "الدول",
-                inv_last_added: "آخر إضافة",
+                inv_total_numbers: "إجمالي الأرقام",
+                inv_countries: "إجمالي الدول",
+                inv_lowest_price: "أقل سعر",
                 inv_add_btn: "إضافة رقم",
                 inv_add_title: "إضافة رقم للمخزن",
                 inv_step1: "الخطوة 1: أدخل الرقم",
@@ -5288,10 +5287,10 @@
                 if (data.stats) {
                     const elTotal = document.getElementById('inv-stat-total');
                     const elCountries = document.getElementById('inv-stat-countries');
-                    const elLast = document.getElementById('inv-stat-last');
+                    const elLowest = document.getElementById('inv-stat-lowest');
                     if (elTotal) elTotal.innerText = data.stats.total_available || 0;
                     if (elCountries) elCountries.innerText = data.stats.total_countries || 0;
-                    if (elLast) elLast.innerText = data.stats.last_added ? formatDateTime(data.stats.last_added) : '—';
+                    if (elLowest) elLowest.innerText = '$' + formatMoney(data.stats.lowest_price || 0);
                 }
 
                 invTotalPages = data.pages || 1;
