@@ -173,13 +173,19 @@
             z-index: 3000;
             transform: translateX(calc(-100% * var(--sidebar-dir-mult, 1)));
             transition: transform 0.2s var(--ease);
-            padding: 40px 20px;
+            padding: 25px 20px;
             display: flex;
             flex-direction: column;
-            gap: 40px;
+            gap: 24px;
             box-shadow: none;
             overflow-y: auto;
             overflow-x: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none;
         }
 
         body[dir="rtl"],
