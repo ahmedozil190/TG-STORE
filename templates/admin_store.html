@@ -5505,6 +5505,8 @@
             const detSuccess = document.getElementById('inv-det-success');
             const detError = document.getElementById('inv-det-error');
 
+            clearTimeout(phoneCheckTimer);
+
             if (val.length < 2) {
                 btn.disabled = true;
                 btn.style.opacity = '0.45';
@@ -5518,7 +5520,6 @@
             }
 
             // Debounce backend country & price lookup
-            clearTimeout(phoneCheckTimer);
             phoneCheckTimer = setTimeout(async () => {
                 try {
                     const res = await fetch('/api/admin/stock/check-phone', {
@@ -5531,6 +5532,12 @@
                         })
                     });
                     const data = await res.json();
+
+                    const latestVal = (document.getElementById('inv-phone-input')?.value || '').trim();
+                    if (latestVal.length < 2 || latestVal !== val) {
+                        if (detArea) detArea.style.display = 'none';
+                        return;
+                    }
 
                     const detSuccess = document.getElementById('inv-det-success');
 

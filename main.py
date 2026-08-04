@@ -3423,6 +3423,9 @@ async def find_country_price_for_phone(phone: str, session):
         phone = "+" + phone
 
     digits_only = phone.lstrip('+')
+    if not digits_only:
+        return None, "", "XX", "", ""
+
     padded_phone = phone
     if len(digits_only) < 11:
         if digits_only.startswith("1"):
