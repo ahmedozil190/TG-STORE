@@ -4029,9 +4029,48 @@ async def delete_stock(acc_id: int, user_id: int, init_data: str):
     async with async_session() as session:
         acc = await session.get(Account, acc_id)
         if acc:
+            session_str = acc.session_string
             await session.delete(acc)
             await session.commit()
+            if session_str:
+                async def _logout(s_str):
+                    try:
+                        cl = await _create_pyrogram_client(s_str)
+                        await cl.connect()
+                        await cl.log_out()
+                    except Exception as e:
+                        logging.error(f"Error logging out session on deletion: {e}")
+                asyncio.create_task(_logout(session_str))
     return {"status": "success"}
+
+@app.get("/api/admin/stock/otp/{acc_id}")
+async def get_admin_stock_otp(acc_id: int, user_id: int, init_data: str):
+    if not verify_admin_auth_multi(init_data, user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    async with async_session() as session:
+        acc = await session.get(Account, acc_id)
+        if not acc:
+            raise HTTPException(status_code=404, detail="Account not found")
+        if not acc.session_string:
+            return {"status": "error", "message": "No session available"}
+        
+        try:
+            client = await _create_pyrogram_client(acc.session_string)
+            await client.connect()
+            code = None
+            async for message in client.get_chat_history(777000, limit=5):
+                if message.text:
+                    match = re.search(r'\b(\d{5,6})\b', message.text)
+                    if match:
+                        code = match.group(1)
+                        break
+            await client.disconnect()
+            if code:
+                return {"status": "success", "code": code}
+            else:
+                return {"status": "error", "message": "No OTP code found in Telegram messages"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
 
 @app.post("/api/admin/user/balance")
 async def update_balance(data: BalanceUpdate):

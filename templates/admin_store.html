@@ -5599,9 +5599,12 @@
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
                         <!-- Number -->
-                        <div style="background: rgba(16, 185, 129, 0.02); border: 1px solid rgba(16, 185, 129, 0.08); padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+                        <div onclick="copyToClipboard('${item.phone}')" title="Click to copy phone number" style="background: rgba(16, 185, 129, 0.02); border: 1px solid rgba(16, 185, 129, 0.08); padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 20px; cursor: pointer; transition: all 0.2s;">
                             <span style="color: var(--text-secondary); opacity: 0.7; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; flex-shrink: 0;">Number</span>
-                            <span style="color: var(--text-secondary); font-weight: 500; font-size: 1.05rem; text-align: right; direction: ltr; font-family: monospace; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.phone}</span>
+                            <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; justify-content: flex-end;">
+                                <span style="color: var(--text-secondary); font-weight: 500; font-size: 1.05rem; text-align: right; direction: ltr; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.phone}</span>
+                                <i class="fas fa-copy" style="font-size: 0.8rem; opacity: 0.5; color: var(--text-secondary);"></i>
+                            </div>
                         </div>
                         <!-- Price -->
                         <div style="background: rgba(139, 92, 246, 0.02); border: 1px solid rgba(139, 92, 246, 0.08); padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 20px;">
@@ -5614,10 +5617,10 @@
                             <span style="color: var(--text-secondary); font-weight: 500; font-size: 1rem; text-align: right; flex: 1; min-width: 0;">${formatDateTime(item.created_at)}</span>
                         </div>
                     </div>
-                    <!-- Action Buttons: Code (left) + Delete (right) -->
+                    <!-- Action Buttons: OTP (left) + Delete (right) -->
                     <div style="display: flex; gap: 10px;">
-                        <button class="primary-btn" style="flex: 1; background: rgba(96, 165, 250, 0.1); color: var(--accent); border: 1px solid rgba(96, 165, 250, 0.2); box-shadow: none; padding: 14px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="copyToClipboard('${item.phone}')">
-                            <i class="fas fa-copy"></i> Code
+                        <button class="primary-btn" style="flex: 1; background: rgba(96, 165, 250, 0.1); color: var(--accent); border: 1px solid rgba(96, 165, 250, 0.2); box-shadow: none; padding: 14px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="fetchInventoryOTP(${item.id}, this)">
+                            <i class="fas fa-key"></i> OTP
                         </button>
                         <button class="primary-btn" style="flex: 1; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); box-shadow: none; padding: 14px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="deleteInventoryNumber(${item.id})">
                             <i class="fas fa-trash"></i> Delete
@@ -5679,6 +5682,28 @@
             } catch (e) {
                 console.error(e);
                 showToast(currentLang === 'ar' ? 'خطأ' : 'Error', 'Connection failed', 'error');
+            }
+        }
+
+        async function fetchInventoryOTP(accId, btnEl) {
+            const originalContent = btnEl.innerHTML;
+            btnEl.disabled = true;
+            btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            try {
+                const res = await fetch(`/api/admin/stock/otp/${accId}?user_id=${userId}&init_data=${encodeURIComponent(initData)}`);
+                const data = await res.json();
+                if (data.status === 'success' && data.code) {
+                    copyToClipboard(data.code);
+                    showToast(currentLang === 'ar' ? 'كود التحقق' : 'OTP Code', `${currentLang === 'ar' ? 'تم نسخ كود التحقق:' : 'OTP Code copied:'} ${data.code}`, 'success');
+                } else {
+                    showToast(currentLang === 'ar' ? 'تنبيه' : 'Notice', data.message || (currentLang === 'ar' ? 'لم يتم العثور على كود' : 'No code found'), 'error');
+                }
+            } catch (e) {
+                console.error("Fetch OTP error:", e);
+                showToast(currentLang === 'ar' ? 'خطأ' : 'Error', currentLang === 'ar' ? 'حدث خطأ أثناء جلب الكود' : 'Error fetching OTP code', 'error');
+            } finally {
+                btnEl.disabled = false;
+                btnEl.innerHTML = originalContent;
             }
         }
 
