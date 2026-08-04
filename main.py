@@ -3416,11 +3416,9 @@ async def toggle_local(data: dict):
             setting.value = "true" if enabled else "false"
         await session.commit()
         return {"status": "success"}
-@app.post("/api/admin/stock/check-phone")
-async def check_phone_country_price(data: StockPhoneCheck):
-    phone = (data.phone or "").strip()
-    if not phone:
-        return {"status": "invalid", "message": "Empty phone number"}
+async def find_country_price_for_phone(phone: str, session):
+    """Smart lookup for CountryPrice matching exact ISO, country name, or single configured country under shared calling codes (+1, +7, etc.)."""
+    phone = phone.strip()
     if not phone.startswith("+"):
         phone = "+" + phone
 
@@ -3449,24 +3447,52 @@ async def check_phone_country_price(data: StockPhoneCheck):
 
     name, flag, iso_code = resolve_country_info(iso_code if iso_code != "XX" else country_code, full_phone=padded_phone)
 
-    if not country_code and not name:
-        return {"status": "invalid", "message": "Invalid phone format"}
+    # Step 1: Match by exact iso_code
+    cp = None
+    if iso_code and iso_code != "XX":
+        stmt = select(CountryPrice).where(CountryPrice.iso_code == iso_code)
+        cp = (await session.execute(stmt)).scalar()
+
+    # Step 2: Match by exact or partial country_name
+    if not cp and name:
+        stmt = select(CountryPrice).where(CountryPrice.country_name.ilike(f"%{name}%"))
+        cp = (await session.execute(stmt)).scalar()
+
+    # Step 3: Handle shared calling codes (+1, +7, +44) when default region returned (e.g. +1 defaults to US)
+    if not cp and country_code:
+        stmt = select(CountryPrice).where(CountryPrice.country_code == country_code)
+        cp_list = (await session.execute(stmt)).scalars().all()
+        
+        if len(cp_list) == 1:
+            cp = cp_list[0]
+            name = cp.country_name
+            flag = get_flag_emoji(cp.iso_code) if cp.iso_code else flag
+        elif len(cp_list) > 1:
+            for item in cp_list:
+                item_iso = (item.iso_code or "").strip().upper()
+                if item_iso:
+                    try:
+                        p_test = phonenumbers.parse(phone, item_iso)
+                        if phonenumbers.region_code_for_number(p_test) == item_iso:
+                            cp = item
+                            name = cp.country_name
+                            flag = get_flag_emoji(cp.iso_code)
+                            break
+                    except: pass
+
+    return cp, country_code, iso_code, name, flag
+
+@app.post("/api/admin/stock/check-phone")
+async def check_phone_country_price(data: StockPhoneCheck):
+    phone = (data.phone or "").strip()
+    if not phone:
+        return {"status": "invalid", "message": "Empty phone number"}
 
     async with async_session() as session:
-        # Match by iso_code FIRST to handle +1 shared codes (e.g., Dominican Republic DO vs US)
-        cp = None
-        if iso_code and iso_code != "XX":
-            stmt = select(CountryPrice).where(CountryPrice.iso_code == iso_code)
-            cp = (await session.execute(stmt)).scalar()
+        cp, country_code, iso_code, name, flag = await find_country_price_for_phone(phone, session)
 
-        if not cp and name:
-            stmt = select(CountryPrice).where(CountryPrice.country_name.ilike(f"%{name}%"))
-            cp = (await session.execute(stmt)).scalar()
-
-        # Fallback to country_code ONLY for non-shared codes (exclude +1, +7, +44, etc.)
-        if not cp and country_code and country_code not in ["1", "7", "44"]:
-            stmt = select(CountryPrice).where(CountryPrice.country_code == country_code)
-            cp = (await session.execute(stmt)).scalar()
+        if not country_code and not name:
+            return {"status": "invalid", "message": "Invalid phone format"}
 
         if not cp or cp.price is None or cp.price <= 0:
             return {
@@ -3491,40 +3517,10 @@ async def start_login(data: StockLoginStart):
         raise HTTPException(status_code=403, detail="Unauthorized")
     from services.session_manager import request_app_code
     phone = data.phone.strip()
-    if not phone.startswith("+"):
-        phone = "+" + phone
-
-    digits_only = phone.lstrip('+')
-    padded_phone = phone
-    if len(digits_only) < 10:
-        padded_phone = phone + ("0" * (12 - len(phone)))
-
-    try:
-        parsed = phonenumbers.parse(padded_phone)
-        country_code = str(parsed.country_code)
-        iso_code = phonenumbers.region_code_for_number(parsed)
-        if not iso_code or iso_code == "ZZ":
-            iso_code = phonenumbers.region_code_for_country_code(int(country_code))
-    except Exception as e:
-        logger.error(f"Phone Parse Error: {e}")
-        raise HTTPException(status_code=400, detail="Invalid phone format (+123...)")
-
-    name, flag, iso_code = resolve_country_info(iso_code if iso_code != "XX" else country_code, full_phone=padded_phone)
-    country_name = f"{flag} {name}"
 
     async with async_session() as session:
-        cp = None
-        if iso_code and iso_code != "XX":
-            stmt = select(CountryPrice).where(CountryPrice.iso_code == iso_code)
-            cp = (await session.execute(stmt)).scalar()
-
-        if not cp and name:
-            stmt = select(CountryPrice).where(CountryPrice.country_name.ilike(f"%{name}%"))
-            cp = (await session.execute(stmt)).scalar()
-
-        if not cp and country_code and country_code not in ["1", "7", "44"]:
-            stmt = select(CountryPrice).where(CountryPrice.country_code == country_code)
-            cp = (await session.execute(stmt)).scalar()
+        cp, country_code, iso_code, name, flag = await find_country_price_for_phone(phone, session)
+        country_name = f"{flag} {name}"
 
         if not cp or cp.price is None or cp.price <= 0:
             raise HTTPException(
