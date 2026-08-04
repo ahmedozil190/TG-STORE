@@ -2225,15 +2225,15 @@
                     </div>
                 </div>
 
-                <!-- Toolbar (80% Search / 20% Add Button with Identical Height) -->
-                <div style="display: flex; gap: 10px; margin-bottom: 16px; align-items: center; width: 100%;">
-                    <div style="flex: 0 0 calc(80% - 5px); width: calc(80% - 5px); position: relative; height: 46px; box-sizing: border-box;">
-                        <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); opacity: 0.5; font-size: 0.85rem;"></i>
+                <!-- Toolbar (80% Search Box matching store.html / 20% Add Button with Identical Height 54px & Radius 16px) -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center; width: 100%;">
+                    <div style="flex: 0 0 calc(80% - 5px); width: calc(80% - 5px); height: 54px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); box-sizing: border-box;">
+                        <i class="fas fa-search" style="color: var(--text-s); font-size: 0.95rem; opacity: 0.7;"></i>
                         <input type="text" id="inv-search" placeholder="Search phone or country..." oninput="searchInventory()"
-                            style="width: 100%; height: 46px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 0 14px 0 38px; color: var(--text-p); font-size: 0.92rem; box-sizing: border-box; outline: none;">
+                            style="background: transparent; border: none; outline: none; color: var(--text-p); font-size: 0.95rem; font-weight: 600; width: 100%;">
                     </div>
                     <button onclick="openAddNumberModal()" class="primary-btn" id="btn-open-add-number"
-                        style="flex: 0 0 calc(20% - 5px); width: calc(20% - 5px); height: 46px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border-radius: 12px; box-sizing: border-box; flex-shrink: 0;">
+                        style="flex: 0 0 calc(20% - 5px); width: calc(20% - 5px); height: 54px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border-radius: 16px; box-sizing: border-box; flex-shrink: 0;">
                         <i class="fas fa-plus"></i>
                     </button>
                 </div>
