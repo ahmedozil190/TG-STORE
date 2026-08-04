@@ -2269,24 +2269,24 @@
             <!-- ===== Dedicated Country Numbers Page (Level 2) ===== -->
             <section id="section-inventory-country" class="view-section">
                 <!-- Toolbar (Purple Gradient Back Button + Search Bar) -->
-                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px; width: 100%;">
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; width: 100%; box-sizing: border-box;">
                     <button onclick="switchNav('inventory', null, true)"
-                        style="flex: 0 0 72px; width: 72px; height: 54px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #5865F2, #8b5cf6) !important; border: 1px solid rgba(139, 92, 246, 0.4); border-radius: 16px; color: #ffffff !important; cursor: pointer; font-size: 1.25rem; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.35); flex-shrink: 0; transition: all 0.2s; box-sizing: border-box;">
+                        style="flex: 0 0 54px; width: 54px; height: 54px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #5865F2, #8b5cf6) !important; border: 1px solid rgba(139, 92, 246, 0.4); border-radius: 16px; color: #ffffff !important; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.35); flex-shrink: 0; transition: all 0.2s; box-sizing: border-box;">
                         <i class="fas fa-arrow-left" style="color: #ffffff !important; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; line-height: 1;"></i>
                     </button>
                     <div
-                        style="flex: 1; height: 54px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); box-sizing: border-box;">
+                        style="flex: 1; min-width: 0; height: 54px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); box-sizing: border-box;">
                         <i class="fas fa-search" style="color: var(--text-s); font-size: 0.95rem; opacity: 0.7;"></i>
                         <input type="text" id="country-num-search" placeholder="Search phone number..."
                             oninput="searchCountryNumbers()"
-                            style="flex: 1; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 0.95rem; font-weight: 600;">
+                            style="flex: 1; width: 100%; min-width: 0; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 0.95rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                 </div>
 
                 <!-- Country Numbers List Card with Country Flag+Name as header -->
                 <div class="card" style="padding: 22px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                        <div id="country-page-title" style="font-size: 1.2rem; font-weight: 800; color: var(--text-p); display: flex; align-items: center; gap: 10px;"></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; width: 100%;">
+                        <div id="country-page-title" style="width: 100%; font-size: 1.2rem; font-weight: 800; color: var(--text-p);"></div>
                     </div>
                     <div id="country-numbers-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
                     <div id="country-num-pagination" class="pagination-ctrls" style="display: none; margin-top: 16px;">
@@ -5546,10 +5546,12 @@
                 const titleEl = document.getElementById('country-page-title');
                 if (titleEl) {
                     titleEl.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span>${currentCountryFlag}</span>
-                            <span>${currentCountryName}</span>
-                            <span style="background: rgba(139, 92, 246, 0.12); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.25); padding: 4px 12px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; font-family: monospace;">
+                        <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 800; color: var(--text-p);">
+                                <span>${currentCountryFlag}</span>
+                                <span>${currentCountryName}</span>
+                            </div>
+                            <span style="background: rgba(139, 92, 246, 0.12); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.25); padding: 5px 14px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; font-family: monospace;">
                                 ${data.total || 0}
                             </span>
                         </div>`;
