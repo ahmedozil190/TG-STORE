@@ -5613,13 +5613,13 @@
         async function invGetCode(btn) {
             const phone = document.getElementById('inv-phone-input').value.trim();
             if (!phone) {
-                showToast(currentLang === 'ar' ? 'تنبيه' : 'Alert', currentLang === 'ar' ? 'يرجى إدخال رقم الهاتف' : 'Please enter phone number', 'error');
+                showToast('Alert', 'Please enter phone number', 'error');
                 return;
             }
 
             const oldText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLang === 'ar' ? 'جاري الطلب...' : 'Sending...');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
 
             try {
                 const res = await fetch('/api/admin/stock/start-login', {
@@ -5638,15 +5638,15 @@
                     currentPhoneHash = data.phone_code_hash || data.hash;
                     document.getElementById('inv-step-1').style.display = 'none';
                     document.getElementById('inv-step-2').style.display = 'block';
-                    document.getElementById('inv-step2-label').innerText = (currentLang === 'ar' ? 'تم إرسال الكود إلى الرقم: ' : 'Code sent to: ') + phone;
-                    showToast(currentLang === 'ar' ? 'نجاح' : 'Success', currentLang === 'ar' ? 'تم إرسال كود التحقق بنجاح' : 'Code requested successfully', 'success');
+                    document.getElementById('inv-step2-label').innerText = 'Code sent to: ' + phone;
+                    showToast('Success', 'Verification code sent successfully', 'success');
                 } else {
-                    const errDetail = data.detail || data.message || (currentLang === 'ar' ? 'فشل إرسال كود التحقق. يرجى التأكد من الرقم' : 'Failed to request code');
-                    showToast(currentLang === 'ar' ? 'خطأ في الطلب' : 'Request Error', errDetail, 'error');
+                    const errDetail = data.detail || data.message || 'Failed to request code';
+                    showToast('Request Error', errDetail, 'error');
                 }
             } catch (e) {
                 console.error(e);
-                showToast(currentLang === 'ar' ? 'خطأ' : 'Error', currentLang === 'ar' ? 'حدث خطأ أثناء الاتصال بالخادم' : 'Connection error', 'error');
+                showToast('Error', 'Connection error', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = oldText;
@@ -5658,7 +5658,7 @@
             const twoFa = document.getElementById('inv-2fa-input').value.trim();
 
             if (!code) {
-                showToast(currentLang === 'ar' ? 'تنبيه' : 'Alert', currentLang === 'ar' ? 'يرجى إدخال كود التحقق' : 'Please enter login code', 'error');
+                showToast('Alert', 'Please enter verification code', 'error');
                 return;
             }
 

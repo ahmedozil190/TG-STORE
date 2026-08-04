@@ -3420,23 +3420,26 @@ async def toggle_local(data: dict):
 async def check_phone_country_price(data: StockPhoneCheck):
     phone = (data.phone or "").strip()
     if not phone:
-        return {"status": "invalid", "message": "رقم فارغ"}
+        return {"status": "invalid", "message": "Empty phone number"}
     if not phone.startswith("+"):
         phone = "+" + phone
 
+    digits_only = phone.lstrip('+')
+    padded_phone = phone
+    if len(digits_only) < 10:
+        padded_phone = phone + ("0" * (12 - len(phone)))
+
     country_code = ""
     iso_code = "XX"
-
     try:
-        parsed = phonenumbers.parse(phone)
+        parsed = phonenumbers.parse(padded_phone)
         country_code = str(parsed.country_code)
         iso_code = phonenumbers.region_code_for_number(parsed)
         if not iso_code or iso_code == "ZZ":
             iso_code = phonenumbers.region_code_for_country_code(int(country_code))
     except Exception:
-        raw_digits = phone.lstrip('+')
         for l in range(1, 4):
-            sub = raw_digits[:l]
+            sub = digits_only[:l]
             if sub.isdigit():
                 iso = phonenumbers.region_code_for_country_code(int(sub))
                 if iso and iso != "ZZ":
@@ -3444,31 +3447,25 @@ async def check_phone_country_price(data: StockPhoneCheck):
                     iso_code = iso
                     break
 
-    name, flag, iso_code = resolve_country_info(iso_code if iso_code != "XX" else country_code, full_phone=phone)
+    name, flag, iso_code = resolve_country_info(iso_code if iso_code != "XX" else country_code, full_phone=padded_phone)
 
     if not country_code and not name:
-        return {"status": "invalid", "message": "رقم هاتف غير صالح"}
+        return {"status": "invalid", "message": "Invalid phone format"}
 
     async with async_session() as session:
-        stmt = select(CountryPrice)
-        res = await session.execute(stmt)
-        all_cp = res.scalars().all()
-
+        # Match by iso_code FIRST to handle +1 shared codes (e.g., Dominican Republic DO vs US)
         cp = None
-        for item in all_cp:
-            ic = (item.iso_code or "").strip().upper()
-            cc = (item.country_code or "").strip().upper().lstrip('+')
-            cn = (item.country_name or "").strip().lower()
+        if iso_code and iso_code != "XX":
+            stmt = select(CountryPrice).where(CountryPrice.iso_code == iso_code)
+            cp = (await session.execute(stmt)).scalar()
 
-            if ic and iso_code != "XX" and ic == iso_code.upper():
-                cp = item
-                break
-            if cc and country_code and cc == country_code:
-                cp = item
-                break
-            if name and (name.lower() in cn or cn in name.lower()):
-                cp = item
-                break
+        if not cp and name:
+            stmt = select(CountryPrice).where(CountryPrice.country_name == name)
+            cp = (await session.execute(stmt)).scalar()
+
+        if not cp and country_code:
+            stmt = select(CountryPrice).where(CountryPrice.country_code == country_code)
+            cp = (await session.execute(stmt)).scalar()
 
         if not cp or cp.price is None or cp.price <= 0:
             return {
@@ -3476,7 +3473,7 @@ async def check_phone_country_price(data: StockPhoneCheck):
                 "country": name,
                 "raw_name": name,
                 "flag": flag,
-                "message": f"عذراً، هذه الدولة ({name}) ليس لها سعر مضاف. يجب إضافة سعر للدولة من لوحة التحكم قبل إضافة الأرقام."
+                "message": f"No price set for {name}. Please add a price first."
             }
 
         return {
@@ -3496,32 +3493,42 @@ async def start_login(data: StockLoginStart):
     if not phone.startswith("+"):
         phone = "+" + phone
 
+    digits_only = phone.lstrip('+')
+    padded_phone = phone
+    if len(digits_only) < 10:
+        padded_phone = phone + ("0" * (12 - len(phone)))
+
     try:
-        parsed = phonenumbers.parse(phone)
-        if not phonenumbers.is_valid_number(parsed):
-            raise ValueError("Invalid phone format")
+        parsed = phonenumbers.parse(padded_phone)
         country_code = str(parsed.country_code)
         iso_code = phonenumbers.region_code_for_number(parsed)
-        flag = get_flag_emoji(iso_code)
-        raw_name = geocoder.description_for_number(parsed, "en") or f"Code {country_code}"
-        country_name = f"{flag} {raw_name}"
+        if not iso_code or iso_code == "ZZ":
+            iso_code = phonenumbers.region_code_for_country_code(int(country_code))
     except Exception as e:
         logger.error(f"Phone Parse Error: {e}")
-        raise HTTPException(status_code=400, detail="رقم هاتف غير صالح، يرجى كتابة الرقم بالصيغة الدولية (+1234567...)")
+        raise HTTPException(status_code=400, detail="Invalid phone format (+123...)")
+
+    name, flag, iso_code = resolve_country_info(iso_code if iso_code != "XX" else country_code, full_phone=padded_phone)
+    country_name = f"{flag} {name}"
 
     async with async_session() as session:
-        stmt = select(CountryPrice).where(
-            CountryPrice.country_code == country_code,
-            CountryPrice.iso_code == iso_code
-        )
-        cp = (await session.execute(stmt)).scalar()
-        if not cp:
-            cp = (await session.execute(select(CountryPrice).where(CountryPrice.country_code == country_code))).scalar()
+        cp = None
+        if iso_code and iso_code != "XX":
+            stmt = select(CountryPrice).where(CountryPrice.iso_code == iso_code)
+            cp = (await session.execute(stmt)).scalar()
+
+        if not cp and name:
+            stmt = select(CountryPrice).where(CountryPrice.country_name == name)
+            cp = (await session.execute(stmt)).scalar()
+
+        if not cp and country_code:
+            stmt = select(CountryPrice).where(CountryPrice.country_code == country_code)
+            cp = (await session.execute(stmt)).scalar()
 
         if not cp or cp.price is None or cp.price <= 0:
             raise HTTPException(
                 status_code=400,
-                detail=f"عذراً، لم يتم إضافة سعر لـ ({raw_name}) بعد. يجب إضافة سعر لهذه الدولة أولاً قبل إضافة أرقامها."
+                detail=f"No price set for {name}. Please add a price first."
             )
         price = cp.price
 
@@ -3539,11 +3546,11 @@ async def start_login(data: StockLoginStart):
         logger.error(f"Login Start Error: {e}")
         err_text = str(e)
         if "PHONE_NUMBER_INVALID" in err_text:
-            err_text = "رقم الهاتف غير صحيح أو غير مسجل في تليجرام."
+            err_text = "Invalid phone number or not registered on Telegram."
         elif "PHONE_NUMBER_BANNED" in err_text:
-            err_text = "هذا الرقم محظور في تليجرام (Banned)."
+            err_text = "Phone number is banned on Telegram."
         elif "FLOOD" in err_text:
-            err_text = "تم تجاوز عدد المحاولات المسموحة، يرجى الانتظار قليلاً."
+            err_text = "Too many requests. Please wait a moment."
         raise HTTPException(status_code=400, detail=err_text)
 
 @app.post("/api/admin/stock/complete-login")
@@ -3552,12 +3559,10 @@ async def complete_login(data: StockLoginComplete):
         raise HTTPException(status_code=403, detail="Unauthorized")
     from services.session_manager import submit_app_code
     try:
-        # If 2FA is needed, the current session_manager doesn't handle it well in submit_app_code.
-        # But for now, we'll try the simple path.
         submit_result = await submit_app_code(-1, data.phone, data.hash, data.code)
         
         if not submit_result:
-            raise HTTPException(status_code=400, detail="فشل في جلب الجلسة. قد يكون الكود خطأ.")
+            raise HTTPException(status_code=400, detail="Failed to login. Invalid verification code.")
             
         session_string = submit_result["session_string"]
         two_fa_password = submit_result["two_fa_password"]
