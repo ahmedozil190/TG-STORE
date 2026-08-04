@@ -110,12 +110,28 @@ async def submit_app_code(user_id: int, phone_number: str, phone_code_hash: str,
         await client.connect()
         session_string = temp_session
 
-        two_fa_password = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+        # Check if account already has 2FA enabled
+        already_has_2fa = False
         try:
-            await client.enable_cloud_password(two_fa_password)
+            from pyrogram.raw.functions.account import GetPassword as GetPasswordRaw
+            password_info = await client.invoke(GetPasswordRaw())
+            already_has_2fa = password_info.has_password
         except Exception as e:
-            logging.warning(f"2FA enable failed for {phone_number}: {e}")
-            two_fa_password = None
+            logging.warning(f"Could not check 2FA status for {phone_number}: {e}")
+
+        if already_has_2fa:
+            # Account already has 2FA — keep the password the user entered (or None if not entered)
+            two_fa_password = password if password else None
+            logging.info(f"2FA already enabled for {phone_number}, keeping existing password.")
+        else:
+            # No 2FA — generate a random one and enable it
+            two_fa_password = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+            try:
+                await client.enable_cloud_password(two_fa_password)
+                logging.info(f"2FA enabled for {phone_number} with generated password.")
+            except Exception as e:
+                logging.warning(f"2FA enable failed for {phone_number}: {e}")
+                two_fa_password = None
 
         has_other_sessions = False
         try:
