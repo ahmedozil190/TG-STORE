@@ -2268,19 +2268,17 @@
 
             <!-- ===== Dedicated Country Numbers Page (Level 2) ===== -->
             <section id="section-inventory-country" class="view-section">
-                <!-- Toolbar (Back Button Box + Search Bar in one row) -->
-                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px; width: 100%;">
+                <!-- Integrated Toolbar (Back Button + Search Bar) -->
+                <div style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 6px 16px 6px 8px; display: flex; align-items: center; gap: 12px; height: 54px; box-shadow: var(--shadow); margin-bottom: 20px;">
                     <button class="settings-back-btn" onclick="switchNav('inventory', null, true)"
-                        style="width: 54px; height: 54px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; color: var(--text-p); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: var(--shadow); flex-shrink: 0; padding: 0;">
+                        style="width: 40px; height: 40px; background: var(--card-glass); border: 1px solid var(--border); border-radius: 12px; color: var(--text-p); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0; transition: all 0.2s;">
                         <i class="fas fa-arrow-left"></i>
                     </button>
-                    <div
-                        style="flex: 1; height: 54px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); box-sizing: border-box;">
-                        <i class="fas fa-search" style="color: var(--text-s); font-size: 0.95rem; opacity: 0.7;"></i>
-                        <input type="text" id="country-num-search" placeholder="Search phone number..."
-                            oninput="searchCountryNumbers()"
-                            style="flex: 1; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 0.95rem; font-weight: 600;">
-                    </div>
+                    <div style="width: 1px; height: 24px; background: var(--border); flex-shrink: 0;"></div>
+                    <i class="fas fa-search" style="color: var(--text-s); font-size: 0.95rem; opacity: 0.7;"></i>
+                    <input type="text" id="country-num-search" placeholder="Search phone number..."
+                        oninput="searchCountryNumbers()"
+                        style="flex: 1; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 0.95rem; font-weight: 600;">
                 </div>
 
                 <!-- Country Numbers List Card with Country Flag+Name as header -->
@@ -3294,7 +3292,7 @@
                 search_custom_users_ph: "ابحث عن المعرف أو الاسم أو الدولة...",
                 lbl_date: "التاريخ",
                 nav_inventory: "المخزون",
-                nav_inventory_country: "All Numbers",
+                nav_inventory_country: "كل الأرقام",
                 inv_total_numbers: "إجمالي الأرقام",
                 inv_countries: "إجمالي الدول",
                 inv_lowest_price: "أقل سعر",
@@ -5588,7 +5586,7 @@
                         <!-- Number -->
                         <div style="background: rgba(16, 185, 129, 0.02); border: 1px solid rgba(16, 185, 129, 0.08); padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 20px;">
                             <span style="color: var(--text-secondary); opacity: 0.7; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; flex-shrink: 0;">Number</span>
-                            <span style="color: var(--text-p); font-weight: 700; font-size: 1rem; text-align: right; direction: ltr; font-family: monospace; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.phone}</span>
+                            <span style="color: var(--text-secondary); font-weight: 500; font-size: 1.05rem; text-align: right; direction: ltr; font-family: monospace; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.phone}</span>
                         </div>
                         <!-- Price -->
                         <div style="background: rgba(139, 92, 246, 0.02); border: 1px solid rgba(139, 92, 246, 0.08); padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 20px;">
