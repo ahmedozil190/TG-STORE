@@ -3460,10 +3460,11 @@ async def check_phone_country_price(data: StockPhoneCheck):
             cp = (await session.execute(stmt)).scalar()
 
         if not cp and name:
-            stmt = select(CountryPrice).where(CountryPrice.country_name == name)
+            stmt = select(CountryPrice).where(CountryPrice.country_name.ilike(f"%{name}%"))
             cp = (await session.execute(stmt)).scalar()
 
-        if not cp and country_code:
+        # Fallback to country_code ONLY for non-shared codes (exclude +1, +7, +44, etc.)
+        if not cp and country_code and country_code not in ["1", "7", "44"]:
             stmt = select(CountryPrice).where(CountryPrice.country_code == country_code)
             cp = (await session.execute(stmt)).scalar()
 
@@ -3518,10 +3519,10 @@ async def start_login(data: StockLoginStart):
             cp = (await session.execute(stmt)).scalar()
 
         if not cp and name:
-            stmt = select(CountryPrice).where(CountryPrice.country_name == name)
+            stmt = select(CountryPrice).where(CountryPrice.country_name.ilike(f"%{name}%"))
             cp = (await session.execute(stmt)).scalar()
 
-        if not cp and country_code:
+        if not cp and country_code and country_code not in ["1", "7", "44"]:
             stmt = select(CountryPrice).where(CountryPrice.country_code == country_code)
             cp = (await session.execute(stmt)).scalar()
 
