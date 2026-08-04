@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 from typing import Any, Awaitable, Callable, Dict
 
 import httpx
+from pyrogram import Client, errors as pyrogram_errors
+from pyrogram.raw import functions as pyrogram_functions
 from dotenv import load_dotenv
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Enum, Boolean, BigInteger, text, select, func, or_, cast, delete, update
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -41,6 +43,229 @@ from pydantic import BaseModel
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+
+# ==============================================================================
+# 🔹 SECTION 0: SESSION MANAGER (Pyrogram-based Telegram Login)
+# ==============================================================================
+
+# Temporary store of active Pyrogram clients during sign-in flow
+_login_clients: Dict[int, Client] = {}
+
+async def _create_pyrogram_client(session_string: str = None) -> Client:
+    identity = {
+        "device_model": "Samsung SM-S918B",
+        "system_version": "Android 14",
+        "app_version": "10.14.5",
+        "lang_code": "en"
+    }
+    # API_ID/API_HASH are resolved after load_dotenv() - use lazy references
+    _api_id = int(os.getenv("API_ID", "32796500"))
+    _api_hash = os.getenv("API_HASH", "1675896d79afbe13f67af7919ee06489").strip()
+    if session_string:
+        return Client(name="temp", api_id=_api_id, api_hash=_api_hash, session_string=session_string, in_memory=True, **identity)
+    return Client(name="temp", api_id=_api_id, api_hash=_api_hash, in_memory=True, **identity)
+
+async def request_app_code(user_id: int, phone_number: str) -> str:
+    """Sends verification code and returns phone_code_hash."""
+    client = await _create_pyrogram_client()
+    await client.connect()
+    await asyncio.sleep(1.5)
+    try:
+        sent_code = await client.send_code(phone_number)
+        _login_clients[user_id] = client
+        return sent_code.phone_code_hash
+    except pyrogram_errors.PhoneNumberBanned:
+        raise Exception("Phone number is banned on Telegram.")
+    except pyrogram_errors.PhoneNumberInvalid:
+        raise Exception("PHONE_NUMBER_INVALID")
+    except Exception as e:
+        if client.is_connected:
+            await client.disconnect()
+        raise e
+
+async def submit_app_code(user_id: int, phone_number: str, phone_code_hash: str, phone_code: str) -> dict | None:
+    """Submits OTP and returns session_string + two_fa_password."""
+    client = _login_clients.get(user_id)
+    if not client:
+        logging.error(f"Submit OTP: No active client for user {user_id} (server may have restarted).")
+        return None
+    try:
+        await asyncio.sleep(random.uniform(2.5, 5.5))
+        await client.sign_in(phone_number, phone_code_hash, phone_code)
+        temp_session = await client.export_session_string()
+        try:
+            await client.disconnect()
+        except: pass
+
+        client = await _create_pyrogram_client(temp_session)
+        await client.connect()
+        session_string = temp_session
+
+        two_fa_password = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+        try:
+            await client.enable_cloud_password(two_fa_password)
+        except Exception as e:
+            logging.warning(f"2FA enable failed for {phone_number}: {e}")
+            two_fa_password = None
+
+        has_other_sessions = False
+        try:
+            from pyrogram.raw.functions.account import GetAuthorizations
+            result = await client.invoke(GetAuthorizations())
+            if len(result.authorizations) > 1:
+                has_other_sessions = True
+        except Exception as e:
+            logging.warning(f"GetAuthorizations failed: {e}")
+
+        return {
+            "session_string": session_string,
+            "two_fa_password": two_fa_password,
+            "has_other_sessions": has_other_sessions
+        }
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            if client and client.is_connected:
+                await client.disconnect()
+        except: pass
+        _login_clients.pop(user_id, None)
+
+async def get_telegram_login_code(session_string: str, after_ts: float = None) -> str | None:
+    client = await _create_pyrogram_client(session_string)
+    code = None
+    now = time.time()
+    try:
+        await client.connect()
+        async for message in client.get_chat_history(777000, limit=5):
+            msg_ts = message.date.timestamp() if message.date else 0
+            if after_ts and msg_ts < after_ts:
+                continue
+            if not after_ts and (now - msg_ts) > 120:
+                continue
+            text_msg = message.text
+            if not text_msg:
+                continue
+            match = re.search(r'\b(\d{5})\b', text_msg)
+            if match:
+                code = match.group(1)
+                break
+    except (pyrogram_errors.AuthKeyInvalid, pyrogram_errors.AuthKeyUnregistered,
+            pyrogram_errors.UserDeactivated, pyrogram_errors.SessionRevoked):
+        raise Exception("SESSION_REVOKED")
+    except Exception as e:
+        logging.error(f"Error fetching code: {e}")
+        raise e
+    finally:
+        if client.is_connected:
+            await client.disconnect()
+    return code
+
+async def clean_account_for_buyer(session_string: str, two_fa: str = None):
+    try:
+        client = await _create_pyrogram_client(session_string)
+        await client.connect()
+        try:
+            await client.invoke(pyrogram_functions.auth.ResetAuthorizations())
+        except pyrogram_errors.FreshResetAuthorisationForbidden:
+            try:
+                auths = await client.invoke(pyrogram_functions.account.GetAuthorizations())
+                for auth in auths.authorizations:
+                    if auth.hash != 0:
+                        try:
+                            await client.invoke(pyrogram_functions.account.TerminateAuthorization(hash=auth.hash))
+                        except: pass
+            except: pass
+        except Exception as e:
+            logging.error(f"ResetAuthorizations failed: {e}")
+        try:
+            if two_fa and two_fa.strip():
+                await client.remove_cloud_password(two_fa)
+        except Exception as e:
+            logging.error(f"Remove 2FA failed: {e}")
+        if client.is_connected:
+            await client.disconnect()
+    except Exception as e:
+        logging.error(f"clean_account_for_buyer error: {e}")
+
+async def logout_bot_session(session_string: str, delay: int = 600):
+    if not session_string: return
+    try:
+        client = await _create_pyrogram_client(session_string)
+        await client.connect()
+        try:
+            initial_auths = await client.invoke(pyrogram_functions.account.GetAuthorizations())
+            initial_count = len(initial_auths.authorizations)
+        except:
+            initial_count = 1
+        start_time = asyncio.get_event_loop().time()
+        while (asyncio.get_event_loop().time() - start_time) < delay:
+            await asyncio.sleep(5)
+            try:
+                current_auths = await client.invoke(pyrogram_functions.account.GetAuthorizations())
+                if len(current_auths.authorizations) > initial_count:
+                    break
+            except:
+                return
+        await client.log_out()
+    except Exception as e:
+        logging.error(f"logout_bot_session error: {e}")
+
+async def is_session_alive(session_string: str) -> tuple[bool, str]:
+    try:
+        client = await _create_pyrogram_client(session_string)
+        await client.connect()
+        me = await client.get_me()
+        if not me or getattr(me, 'is_scam', False) or getattr(me, 'is_fake', False):
+            return False, "frozen"
+        try:
+            test_msg = await client.send_message("me", "✅")
+            await test_msg.delete()
+        except:
+            return False, "frozen"
+        try:
+            import time as _time
+            start_time = _time.time()
+            await client.send_message("SpamBot", "/start")
+            spambot_replied = False
+            for i in range(15):
+                await asyncio.sleep(0.5)
+                async for msg in client.get_chat_history("SpamBot", limit=3):
+                    if msg.from_user and msg.from_user.id == 178220800 and msg.date.timestamp() > (start_time - 2):
+                        spambot_replied = True
+                        btn_count = 0
+                        markup = getattr(msg, "reply_markup", None)
+                        if markup:
+                            if hasattr(markup, "inline_keyboard"):
+                                for row in markup.inline_keyboard:
+                                    btn_count += len(row)
+                            if hasattr(markup, "keyboard"):
+                                for row in markup.keyboard:
+                                    btn_count += len(row)
+                        if btn_count >= 3:
+                            return False, "spam"
+                        return True, ""
+                if spambot_replied:
+                    break
+            if not spambot_replied:
+                return False, "spam_no_reply"
+        except Exception as e:
+            err_type = type(e).__name__
+            if any(x in err_type for x in ["PeerFlood", "UserRestricted", "Forbidden"]):
+                return False, "spam"
+            return False, f"check_failed: {err_type}"
+        return True, ""
+    except Exception as e:
+        err_str = str(e).lower()
+        if any(k in err_str for k in ["unauthorized", "auth", "session"]):
+            return False, "session_removed"
+        return False, "frozen"
+    finally:
+        try:
+            if 'client' in locals() and client.is_connected:
+                await client.disconnect()
+        except: pass
+
 
 # ==============================================================================
 # 🔹 SECTION 1: CONFIGURATION (إعدادات النظام والمشروع)
@@ -2164,7 +2389,7 @@ async def store_buy(data: StoreBuy):
                 await session.commit()
                 
                 # Background cleaning: Reset authorizations and remove 2FA
-                from services.session_manager import clean_account_for_buyer
+                # clean_account_for_buyer is defined inline above
                 asyncio.create_task(clean_account_for_buyer(account.session_string, account.two_fa_password))
                 
                 return {"status": "success", "phone": account.phone_number, "id": account.id}
@@ -2178,7 +2403,7 @@ async def store_buy(data: StoreBuy):
 
 @app.get("/api/store/get-code")
 async def store_get_code(user_id: int, phone: str, init_data: str):
-    from services.session_manager import get_telegram_login_code
+    # get_telegram_login_code is defined inline above
     try:
         if not verify_telegram_auth(init_data, BOT_TOKEN, user_id):
             raise HTTPException(status_code=401, detail="Unauthorized")
@@ -2221,7 +2446,7 @@ async def store_get_code(user_id: int, phone: str, init_data: str):
                     await send_purchase_log(user_id, account.country, account.price, account.phone_number, code, password=account.two_fa_password)
                     
                     # Schedule bot to log out after 10 mins so the buyer is truly alone
-                    from services.session_manager import logout_bot_session
+                    # logout_bot_session is defined inline above
                     asyncio.create_task(logout_bot_session(account.session_string, delay=600))
                     
                     return {"status": "success", "code": code}
@@ -3523,7 +3748,7 @@ async def check_phone_country_price(data: StockPhoneCheck):
 async def start_login(data: StockLoginStart):
     if not verify_admin_auth_multi(data.init_data, data.user_id):
         raise HTTPException(status_code=403, detail="Unauthorized")
-    from services.session_manager import request_app_code
+    # request_app_code is defined inline above
     phone = data.phone.strip()
 
     async with async_session() as session:
@@ -3562,7 +3787,7 @@ async def start_login(data: StockLoginStart):
 async def complete_login(data: StockLoginComplete):
     if not verify_admin_auth_multi(data.init_data, data.user_id):
         raise HTTPException(status_code=403, detail="Unauthorized")
-    from services.session_manager import submit_app_code
+    # submit_app_code is defined inline above
     try:
         submit_result = await submit_app_code(-1, data.phone, data.hash, data.code)
         
@@ -3766,7 +3991,7 @@ async def admin_check_account_alive(data: dict):
     i_data = data.get("init_data")
     if not verify_admin_auth_multi(i_data, u_id):
         raise HTTPException(status_code=403, detail="Unauthorized")
-    from services.session_manager import is_session_alive
+    # is_session_alive is defined inline above
     acc_id = data.get("account_id")
     async with async_session() as session:
         acc = await session.get(Account, acc_id)
