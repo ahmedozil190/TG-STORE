@@ -2268,34 +2268,28 @@
 
             <!-- ===== Dedicated Country Numbers Page (Level 2) ===== -->
             <section id="section-inventory-country" class="view-section">
-                <!-- Top Navigation & Title Bar -->
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                <!-- Top Navigation (Back button only) -->
+                <div style="display: flex; align-items: center; margin-bottom: 20px;">
                     <button class="settings-back-btn" onclick="switchNav('inventory', null, true)"
                         style="display: flex; align-items: center; gap: 8px; font-weight: 700; background: var(--card-glass); border: 1px solid var(--border); padding: 8px 16px; border-radius: 14px; color: var(--text-p); cursor: pointer;">
                         <i class="fas fa-arrow-left"></i> <span>Back</span>
                     </button>
-                    <div id="country-page-title"
-                        style="font-size: 1.2rem; font-weight: 800; color: var(--text-p); display: flex; align-items: center; gap: 10px;">
-                    </div>
                 </div>
 
-                <!-- Toolbar (Search & Add Button) -->
-                <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center; width: 100%;">
-                    <div
-                        style="flex: 0 0 calc(80% - 5px); width: calc(80% - 5px); height: 54px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); box-sizing: border-box;">
-                        <i class="fas fa-search" style="color: var(--text-s); font-size: 0.95rem; opacity: 0.7;"></i>
-                        <input type="text" id="country-num-search" placeholder="Search phone number..."
-                            oninput="searchCountryNumbers()"
-                            style="background: transparent; border: none; outline: none; color: var(--text-p); font-size: 0.95rem; font-weight: 600; width: 100%;">
-                    </div>
-                    <button onclick="openAddNumberModal()" class="primary-btn"
-                        style="flex: 0 0 calc(20% - 5px); width: calc(20% - 5px); height: 54px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border-radius: 16px; box-sizing: border-box; flex-shrink: 0;">
-                        <i class="fas fa-plus"></i>
-                    </button>
+                <!-- Toolbar (Full-Width Search) -->
+                <div
+                    style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 0 18px; display: flex; align-items: center; gap: 12px; height: 54px; box-shadow: var(--shadow); margin-bottom: 20px;">
+                    <i class="fas fa-search" style="color: var(--text-s); font-size: 0.95rem; opacity: 0.7;"></i>
+                    <input type="text" id="country-num-search" placeholder="Search phone number..."
+                        oninput="searchCountryNumbers()"
+                        style="flex: 1; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 0.95rem; font-weight: 600;">
                 </div>
 
-                <!-- Country Numbers List Card -->
-                <div class="card" style="padding: 20px;">
+                <!-- Country Numbers List Card with Country Flag+Name as header -->
+                <div class="card" style="padding: 22px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <div id="country-page-title" style="font-size: 1.2rem; font-weight: 800; color: var(--text-p); display: flex; align-items: center; gap: 10px;"></div>
+                    </div>
                     <div id="country-numbers-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
                     <div id="country-num-pagination" class="pagination-ctrls" style="display: none; margin-top: 16px;">
                         <button class="pg-btn" id="cNumPgPrev" onclick="cNumPrevPage()"><i
@@ -5586,7 +5580,7 @@
                 <div class="user-card" style="padding: 16px 20px; cursor: default;">
                     <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
                         <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text-secondary);">
-                            <span style="font-size: 1.3rem; margin-right: 8px;">${item.flag || '🌐'}</span>${item.country}
+                            <i class="fas fa-sim-card" style="color: var(--accent); margin-right: 8px;"></i>Number
                         </h3>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
