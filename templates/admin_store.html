@@ -561,6 +561,90 @@
             transform: translateY(-2px);
         }
 
+        /* OTP Result Modal */
+        #otp-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        #otp-modal-overlay.active { display: flex; }
+        #otp-modal-box {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px 28px 28px;
+            max-width: 340px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: slideUp 0.25s ease;
+        }
+        #otp-modal-icon {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 1.5rem;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+        #otp-modal-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-p);
+            margin-bottom: 6px;
+        }
+        #otp-modal-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            opacity: 0.75;
+        }
+        #otp-code-box {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 18px 24px;
+            font-size: 2rem;
+            font-weight: 900;
+            font-family: monospace;
+            color: #10b981;
+            letter-spacing: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+            user-select: all;
+        }
+        #otp-code-box:hover {
+            background: rgba(16, 185, 129, 0.18);
+            border-color: rgba(16, 185, 129, 0.5);
+            transform: scale(1.02);
+        }
+        #otp-copy-hint {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            opacity: 0.55;
+            margin-bottom: 22px;
+        }
+        #otp-ok-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #otp-ok-btn:hover { background: rgba(16, 185, 129, 0.22); }
+
         .confirm-no:hover {
             background: rgba(96, 165, 250, 0.15);
             transform: translateY(-2px);
@@ -5690,14 +5774,7 @@
                 const res = await fetch(`/api/admin/stock/otp/${accId}?user_id=${userId}&init_data=${encodeURIComponent(initData)}`);
                 const data = await res.json();
                 if (data.status === 'success' && data.code) {
-                    copyToClipboard(data.code);
-                    await showAlert(
-                        'OTP Code',
-                        `OTP Code fetched successfully:\n\n 🔑 ${data.code} \n\n(Code copied to clipboard automatically)`,
-                        'fas fa-key',
-                        'rgba(16, 185, 129, 0.15)',
-                        '#10b981'
-                    );
+                    showOTPModal(data.code);
                 } else {
                     await showAlert(
                         'OTP Error',
@@ -6176,6 +6253,34 @@
         </div>
     </div>
     <div class="copy-toast-container" id="copy-toast-container"></div>
+
+    <!-- OTP Result Modal -->
+    <div id="otp-modal-overlay" onclick="closeOTPModal()">
+        <div id="otp-modal-box" onclick="event.stopPropagation()">
+            <div id="otp-modal-icon"><i class="fas fa-key"></i></div>
+            <div id="otp-modal-title">OTP Code</div>
+            <div id="otp-modal-subtitle">OTP code received successfully</div>
+            <div id="otp-code-box" onclick="copyOTPCode()">------</div>
+            <div id="otp-copy-hint"><i class="fas fa-hand-pointer"></i> Click code to copy</div>
+            <button id="otp-ok-btn" onclick="closeOTPModal()"><i class="fas fa-check" style="margin-right:8px;"></i>OK</button>
+        </div>
+    </div>
+
+    <script>
+        let _currentOTPCode = '';
+        function showOTPModal(code) {
+            _currentOTPCode = code;
+            document.getElementById('otp-code-box').innerText = code;
+            document.getElementById('otp-modal-overlay').classList.add('active');
+        }
+        function closeOTPModal() {
+            document.getElementById('otp-modal-overlay').classList.remove('active');
+        }
+        function copyOTPCode() {
+            if (!_currentOTPCode) return;
+            copyToClipboard(_currentOTPCode);
+        }
+    </script>
 </body>
 
 </html>
