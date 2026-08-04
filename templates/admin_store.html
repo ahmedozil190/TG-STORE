@@ -3259,7 +3259,7 @@
                 if (data.bot_name) document.getElementById('sideBrandName').textContent = data.bot_name;
 
 
-                allUsers = (data.users || []).sort((a, b) => (b.join_date || '').localeCompare(a.join_date || ''));
+                allUsers = data.users || [];
                 allTransactions = data.transactions || [];
 
                 const ucEl = document.getElementById('user-count');
