@@ -154,6 +154,8 @@
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-purple) transparent;
         }
 
         [dir="ltr"] {
@@ -166,7 +168,8 @@
 
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
-            width: 6px;
+            width: 7px;
+            height: 7px;
         }
 
         ::-webkit-scrollbar-track {
@@ -176,6 +179,8 @@
         ::-webkit-scrollbar-thumb {
             background: var(--accent-purple);
             border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
         }
 
         body {
