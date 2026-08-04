@@ -5438,18 +5438,8 @@
             const input = document.getElementById('inv-phone-input');
             const btn = document.getElementById('inv-get-code-btn');
             if (!input || !btn) return;
-            
-            // Allow only numbers and '+' at start
-            let raw = input.value;
-            let sanitized = raw.replace(/[^0-9+]/g, '');
-            if (sanitized.indexOf('+') > 0) {
-                sanitized = sanitized[0] + sanitized.slice(1).replace(/\+/g, '');
-            }
-            if (raw !== sanitized) {
-                input.value = sanitized;
-            }
 
-            const val = sanitized.trim();
+            const val = input.value.trim();
             if (val.length >= 5) {
                 btn.disabled = false;
                 btn.style.opacity = '1';
