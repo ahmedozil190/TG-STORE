@@ -2776,7 +2776,7 @@
 
                 <div class="input-group" style="border-bottom: 2px solid var(--border); margin-bottom: 25px; padding-bottom: 8px; text-align: left;">
                     <label data-i18n="phone_number_lbl" style="display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">PHONE NUMBER</label>
-                    <input type="tel" id="inv-phone-input" class="w-input" placeholder="+123..." oninput="checkInvPhoneInput()" style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.3rem; font-weight: 700; font-family: inherit; direction: ltr;">
+                    <input type="tel" inputmode="tel" id="inv-phone-input" class="w-input" placeholder="+123..." oninput="checkInvPhoneInput()" style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.3rem; font-weight: 700; font-family: inherit; direction: ltr;">
                 </div>
 
                 <button class="btn-action" id="inv-get-code-btn" onclick="invGetCode(this)" disabled style="width: 100%; background: var(--accent); color: white; padding: 18px; border-radius: 18px; border: none; font-size: 1rem; font-weight: 800; cursor: not-allowed; box-shadow: none; opacity: 0.45; pointer-events: none; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
@@ -5438,7 +5438,18 @@
             const input = document.getElementById('inv-phone-input');
             const btn = document.getElementById('inv-get-code-btn');
             if (!input || !btn) return;
-            const val = input.value.trim();
+            
+            // Allow only numbers and '+' at start
+            let raw = input.value;
+            let sanitized = raw.replace(/[^0-9+]/g, '');
+            if (sanitized.indexOf('+') > 0) {
+                sanitized = sanitized[0] + sanitized.slice(1).replace(/\+/g, '');
+            }
+            if (raw !== sanitized) {
+                input.value = sanitized;
+            }
+
+            const val = sanitized.trim();
             if (val.length >= 5) {
                 btn.disabled = false;
                 btn.style.opacity = '1';
