@@ -2250,8 +2250,16 @@
                     </button>
                 </div>
 
-                <!-- Numbers List -->
+                <!-- Numbers / Countries List Card -->
                 <div class="card" style="padding: 20px;">
+                    <!-- Country Header / Back Navigation Bar -->
+                    <div id="inv-country-header" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+                        <button onclick="invBackToCountries()" style="background: var(--card-glass); border: 1px solid var(--border); color: var(--text-p); padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                            <i class="fas fa-arrow-left"></i> <span>All Countries</span>
+                        </button>
+                        <div id="inv-selected-country-title" style="font-weight: 800; font-size: 1.1rem; color: var(--text-p); display: flex; align-items: center; gap: 8px;"></div>
+                    </div>
+
                     <div id="inv-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
                     <div id="inv-pagination" class="pagination-ctrls" style="display: none; margin-top: 16px;">
                         <button class="pg-btn" id="invPgPrev" onclick="invPrevPage()"><i
@@ -3163,7 +3171,7 @@
                 inv_lowest_price: "Lowest Price",
                 inv_add_btn: "Add Number",
                 account_details_title: "Account Details",
-                account_details_desc: "Enter the international phone number. We'll automatically detect the country and your reward price.",
+                account_details_desc: "Enter the international phone number. We'll automatically detect the country and the price.",
                 phone_number_lbl: "Phone Number",
                 btn_get_code: "Get Verification Code",
                 verify_login_title: "Verify Login",
@@ -5395,6 +5403,7 @@
         let invCurrentPage = 1;
         let invTotalPages = 1;
         let invSearchQuery = '';
+        let invSelectedCountry = '';
 
         async function fetchInventory(page = 1, search = '') {
             invCurrentPage = page;
@@ -5404,11 +5413,12 @@
                 container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> Loading inventory...</div>';
             }
             try {
-                const res = await fetch(`/api/admin/stock/inventory?user_id=${userId}&init_data=${encodeURIComponent(initData)}&page=${page}&limit=15&search=${encodeURIComponent(search)}&_t=${Date.now()}`);
+                const countryParam = invSelectedCountry ? `&country=${encodeURIComponent(invSelectedCountry)}` : '';
+                const res = await fetch(`/api/admin/stock/inventory?user_id=${userId}&init_data=${encodeURIComponent(initData)}&page=${page}&limit=15&search=${encodeURIComponent(search)}${countryParam}&_t=${Date.now()}`);
                 if (!res.ok) return;
                 const data = await res.json();
 
-                // Stats
+                // Update Stats Header
                 if (data.stats) {
                     const elTotal = document.getElementById('inv-stat-total');
                     const elCountries = document.getElementById('inv-stat-countries');
@@ -5418,22 +5428,35 @@
                     if (elLowest) elLowest.innerHTML = formatMoney(data.stats.lowest_price || 0) + ' <span>USD</span>';
                 }
 
-                invTotalPages = data.pages || 1;
-                renderInventory(data.items || []);
+                const countryHeader = document.getElementById('inv-country-header');
+                if (data.mode === 'countries') {
+                    if (countryHeader) countryHeader.style.display = 'none';
+                    renderCountriesList(data.countries || []);
+                    const pag = document.getElementById('inv-pagination');
+                    if (pag) pag.style.display = 'none';
+                } else {
+                    if (countryHeader) {
+                        countryHeader.style.display = 'flex';
+                        const titleEl = document.getElementById('inv-selected-country-title');
+                        if (titleEl) titleEl.innerText = data.selected_country || invSelectedCountry;
+                    }
+                    invTotalPages = data.pages || 1;
+                    renderNumbersList(data.items || []);
 
-                // Pagination UI
-                const pag = document.getElementById('inv-pagination');
-                if (pag) {
-                    if (invTotalPages > 1) {
-                        pag.style.display = 'flex';
-                        const info = document.getElementById('invPgInfo');
-                        if (info) info.innerText = `Page ${data.page} / ${invTotalPages}`;
-                        const pBtn = document.getElementById('invPgPrev');
-                        const nBtn = document.getElementById('invPgNext');
-                        if (pBtn) pBtn.disabled = (data.page <= 1);
-                        if (nBtn) nBtn.disabled = (data.page >= invTotalPages);
-                    } else {
-                        pag.style.display = 'none';
+                    // Pagination UI
+                    const pag = document.getElementById('inv-pagination');
+                    if (pag) {
+                        if (invTotalPages > 1) {
+                            pag.style.display = 'flex';
+                            const info = document.getElementById('invPgInfo');
+                            if (info) info.innerText = `Page ${data.page} / ${invTotalPages}`;
+                            const pBtn = document.getElementById('invPgPrev');
+                            const nBtn = document.getElementById('invPgNext');
+                            if (pBtn) pBtn.disabled = (data.page <= 1);
+                            if (nBtn) nBtn.disabled = (data.page >= invTotalPages);
+                        } else {
+                            pag.style.display = 'none';
+                        }
                     }
                 }
             } catch (e) {
@@ -5441,15 +5464,52 @@
             }
         }
 
-        function renderInventory(items) {
+        function renderCountriesList(countries) {
+            const container = document.getElementById('inv-list');
+            if (!container) return;
+
+            if (!countries || countries.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; opacity: 0.5;">
+                        <i class="fas fa-boxes" style="font-size: 2.5rem; margin-bottom: 12px; display: block;"></i>
+                        <p style="font-weight: 600;">${translations[currentLang].inv_empty || 'No numbers in inventory'}</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = countries.map(c => `
+                <div onclick="selectInvCountry('${c.country.replace(/'/g, "\\'")}')" class="user-card" 
+                    style="padding: 18px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 15px; border-radius: 18px; transition: all 0.2s;">
+                    <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                        <div style="font-size: 2rem; line-height: 1;">${c.flag || '🌐'}</div>
+                        <div style="min-width: 0;">
+                            <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-p); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${c.country}
+                            </div>
+                            <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px;">
+                                Starting at <span style="color: var(--accent); font-weight: 700;">$${formatMoney(c.min_price)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="background: rgba(88, 101, 242, 0.12); color: var(--accent); padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.88rem; border: 1px solid var(--accent-glow);">
+                            ${c.count} ${c.count === 1 ? 'Number' : 'Numbers'}
+                        </div>
+                        <i class="fas fa-chevron-right" style="color: var(--text-secondary); opacity: 0.6; font-size: 0.9rem;"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderNumbersList(items) {
             const container = document.getElementById('inv-list');
             if (!container) return;
 
             if (!items || items.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 40px 20px; opacity: 0.5;">
-                        <i class="fas fa-boxes" style="font-size: 2.5rem; margin-bottom: 12px; display: block;"></i>
-                        <p style="font-weight: 600;">${translations[currentLang].inv_empty || 'No numbers in inventory'}</p>
+                        <i class="fas fa-sim-card" style="font-size: 2.5rem; margin-bottom: 12px; display: block;"></i>
+                        <p style="font-weight: 600;">No numbers found for this country</p>
                     </div>`;
                 return;
             }
@@ -5459,11 +5519,11 @@
                     <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
                         <div style="font-size: 1.8rem; line-height: 1;">${item.flag || '🌐'}</div>
                         <div style="min-width: 0;">
-                            <div style="font-weight: 700; font-size: 1.05rem; direction: ltr; text-align: left; color: var(--text-p); font-family: monospace;">
+                            <div style="font-weight: 800; font-size: 1.05rem; direction: ltr; text-align: left; color: var(--text-p); font-family: monospace;">
                                 ${item.phone}
                             </div>
                             <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
-                                ${item.country} • <span style="color: var(--accent); font-weight: 600;">$${formatMoney(item.price)}</span>
+                                ${item.country} • <span style="color: var(--accent); font-weight: 700;">$${formatMoney(item.price)}</span>
                             </div>
                         </div>
                     </div>
@@ -5471,12 +5531,24 @@
                         <span style="font-size: 0.72rem; color: var(--text-secondary); opacity: 0.7;">
                             ${formatDateTime(item.created_at)}
                         </span>
-                        <button onclick="deleteInventoryNumber(${item.id})" class="primary-btn" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); box-shadow: none; padding: 8px 12px; font-size: 0.85rem; border-radius: 8px;">
+                        <button onclick="deleteInventoryNumber(${item.id})" class="primary-btn" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); box-shadow: none; padding: 8px 12px; font-size: 0.85rem; border-radius: 8px; cursor: pointer;">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 </div>
             `).join('');
+        }
+
+        function selectInvCountry(countryName) {
+            invSelectedCountry = countryName;
+            document.getElementById('inv-search').value = '';
+            fetchInventory(1, '');
+        }
+
+        function invBackToCountries() {
+            invSelectedCountry = '';
+            document.getElementById('inv-search').value = '';
+            fetchInventory(1, '');
         }
 
         let invSearchTimer = null;

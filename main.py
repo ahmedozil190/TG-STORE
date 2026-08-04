@@ -3912,40 +3912,10 @@ async def update_price(data: PriceUpdate):
     return {"status": "success"}
 
 @app.get("/api/admin/stock/inventory")
-async def get_stock_inventory(user_id: int, init_data: str, page: int = 1, limit: int = 15, search: str = ""):
+async def get_stock_inventory(user_id: int, init_data: str, page: int = 1, limit: int = 15, search: str = "", country: str = ""):
     if not verify_admin_auth_multi(init_data, user_id):
         raise HTTPException(status_code=403, detail="Unauthorized")
     async with async_session() as session:
-        # Only local stock (server_id is NULL, status AVAILABLE)
-        base_q = select(Account).where(
-            Account.status == AccountStatus.AVAILABLE,
-            Account.server_id == None
-        )
-        if search:
-            base_q = base_q.where(
-                (Account.phone_number.ilike(f"%{search}%")) |
-                (Account.country.ilike(f"%{search}%"))
-            )
-        total = (await session.execute(select(func.count()).select_from(base_q.subquery()))).scalar() or 0
-        stmt = base_q.order_by(Account.id.desc()).offset((page - 1) * limit).limit(limit)
-        accounts = (await session.execute(stmt)).scalars().all()
-
-        items = []
-        for acc in accounts:
-            flag = "🌐"
-            try:
-                p = phonenumbers.parse(acc.phone_number)
-                flag = get_flag_emoji(phonenumbers.region_code_for_number(p))
-            except: pass
-            items.append({
-                "id": acc.id,
-                "phone": acc.phone_number,
-                "country": acc.country,
-                "flag": flag,
-                "price": acc.price,
-                "created_at": acc.created_at.isoformat() if acc.created_at else None
-            })
-
         # Summary stats
         total_available = (await session.execute(
             select(func.count(Account.id)).where(Account.status == AccountStatus.AVAILABLE, Account.server_id == None)
@@ -3957,16 +3927,97 @@ async def get_stock_inventory(user_id: int, init_data: str, page: int = 1, limit
             select(func.min(Account.price)).where(Account.status == AccountStatus.AVAILABLE, Account.server_id == None)
         )).scalar() or 0.0
 
-        return {
-            "items": items,
-            "total": total,
-            "page": page,
-            "pages": max(1, (total + limit - 1) // limit),
-            "stats": {
-                "total_available": total_available,
-                "total_countries": total_countries,
-                "lowest_price": lowest_price
+        stats = {
+            "total_available": total_available,
+            "total_countries": total_countries,
+            "lowest_price": lowest_price
+        }
+
+        # LEVEL 2: Specific country selected -> Return numbers list for this country
+        if country:
+            base_q = select(Account).where(
+                Account.status == AccountStatus.AVAILABLE,
+                Account.server_id == None,
+                Account.country == country
+            )
+            if search:
+                base_q = base_q.where(Account.phone_number.ilike(f"%{search}%"))
+
+            total = (await session.execute(select(func.count()).select_from(base_q.subquery()))).scalar() or 0
+            stmt = base_q.order_by(Account.id.desc()).offset((page - 1) * limit).limit(limit)
+            accounts = (await session.execute(stmt)).scalars().all()
+
+            items = []
+            for acc in accounts:
+                flag = "🌐"
+                try:
+                    p = phonenumbers.parse(acc.phone_number)
+                    flag = get_flag_emoji(phonenumbers.region_code_for_number(p))
+                except: pass
+                items.append({
+                    "id": acc.id,
+                    "phone": acc.phone_number,
+                    "country": acc.country,
+                    "flag": flag,
+                    "price": acc.price,
+                    "created_at": acc.created_at.isoformat() if acc.created_at else None
+                })
+
+            return {
+                "mode": "numbers",
+                "selected_country": country,
+                "items": items,
+                "total": total,
+                "page": page,
+                "pages": max(1, (total + limit - 1) // limit),
+                "stats": stats
             }
+
+        # LEVEL 1: No country selected -> Group by country
+        country_q = select(
+            Account.country,
+            func.count(Account.id).label("count"),
+            func.min(Account.price).label("min_price")
+        ).where(
+            Account.status == AccountStatus.AVAILABLE,
+            Account.server_id == None
+        )
+
+        if search:
+            country_q = country_q.where(Account.country.ilike(f"%{search}%"))
+
+        country_q = country_q.group_by(Account.country).order_by(func.count(Account.id).desc())
+        res_countries = (await session.execute(country_q)).all()
+
+        countries_list = []
+        for c_name, c_count, c_min_price in res_countries:
+            sample_acc = (await session.execute(
+                select(Account.phone_number).where(
+                    Account.status == AccountStatus.AVAILABLE,
+                    Account.server_id == None,
+                    Account.country == c_name
+                ).limit(1)
+            )).scalar_one_or_none()
+
+            flag = "🌐"
+            if sample_acc:
+                try:
+                    p = phonenumbers.parse(sample_acc)
+                    flag = get_flag_emoji(phonenumbers.region_code_for_number(p))
+                except: pass
+
+            countries_list.append({
+                "country": c_name or "Unknown",
+                "flag": flag,
+                "count": c_count,
+                "min_price": c_min_price or 0.0
+            })
+
+        return {
+            "mode": "countries",
+            "countries": countries_list,
+            "total_countries": len(countries_list),
+            "stats": stats
         }
 
 @app.delete("/api/admin/stock/delete/{acc_id}")
