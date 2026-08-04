@@ -2532,6 +2532,12 @@
                     allCountries = data.countries || [];
                     countries = allCountries;
                     if (data.servers) serversList = data.servers;
+                    if (typeof renderServerFilters === 'function') {
+                        renderServerFilters();
+                    }
+                    if (typeof filterStore === 'function') {
+                        filterStore();
+                    }
                     if (typeof updateStatsForFilter === 'function') {
                         updateStatsForFilter();
                     }
