@@ -2799,11 +2799,11 @@
                 <!-- Country & Price Live Detection Badge -->
                 <div id="inv-detection-area" style="display: none; margin-bottom: 20px;">
                     <div id="inv-det-success" style="display: none; justify-content: space-between; align-items: center; background: rgba(88, 101, 242, 0.08); border: 1px solid var(--accent-glow); padding: 12px 16px; border-radius: 14px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span id="inv-det-flag" style="font-size: 1.5rem;">🇪🇬</span>
-                            <div id="inv-det-name" style="font-size: 0.95rem; font-weight: 700; color: var(--text-p);">Egypt</div>
+                        <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+                            <span id="inv-det-flag" style="font-size: 1.5rem; flex-shrink: 0;">🇪🇬</span>
+                            <div id="inv-det-name" style="font-size: 0.95rem; font-weight: 700; color: var(--text-p); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">Egypt</div>
                         </div>
-                        <div id="inv-det-price" style="font-weight: 800; font-size: 1.15rem; color: var(--accent);">$0.00</div>
+                        <div id="inv-det-price" style="font-weight: 800; font-size: 1.15rem; color: var(--accent); flex-shrink: 0; margin-left: 10px;">$0.00</div>
                     </div>
 
                     <div id="inv-det-error" style="display: none; align-items: center; gap: 10px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #ef4444; padding: 12px 16px; border-radius: 14px; text-align: left; font-size: 0.82rem; font-weight: 600; line-height: 1.4;">
@@ -5542,7 +5542,9 @@
                             detSuccess.style.border = '1px solid var(--accent-glow)';
                         }
                         document.getElementById('inv-det-flag').innerText = data.flag || '🚩';
-                        document.getElementById('inv-det-name').innerText = data.raw_name || data.country;
+                        const nameEl1 = document.getElementById('inv-det-name');
+                        nameEl1.innerText = data.raw_name || data.country;
+                        nameEl1.title = data.raw_name || data.country;
 
                         const priceEl = document.getElementById('inv-det-price');
                         priceEl.innerText = '$' + parseFloat(data.price).toFixed(2);
@@ -5569,7 +5571,9 @@
                             detSuccess.style.border = '1px solid rgba(239, 68, 68, 0.3)';
                         }
                         document.getElementById('inv-det-flag').innerText = data.flag || '🚩';
-                        document.getElementById('inv-det-name').innerText = data.raw_name || data.country;
+                        const nameEl2 = document.getElementById('inv-det-name');
+                        nameEl2.innerText = data.raw_name || data.country;
+                        nameEl2.title = data.raw_name || data.country;
 
                         const priceEl = document.getElementById('inv-det-price');
                         priceEl.innerText = '$0.00';
