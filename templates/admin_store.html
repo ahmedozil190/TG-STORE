@@ -5505,7 +5505,7 @@
             const detSuccess = document.getElementById('inv-det-success');
             const detError = document.getElementById('inv-det-error');
 
-            if (val.length < 5) {
+            if (val.length < 2) {
                 btn.disabled = true;
                 btn.style.opacity = '0.45';
                 btn.style.pointerEvents = 'none';
@@ -5540,11 +5540,19 @@
                         document.getElementById('inv-det-name').innerText = data.raw_name || data.country;
                         document.getElementById('inv-det-price').innerText = '$' + parseFloat(data.price).toFixed(2);
 
-                        btn.disabled = false;
-                        btn.style.opacity = '1';
-                        btn.style.pointerEvents = 'auto';
-                        btn.style.cursor = 'pointer';
-                        btn.style.boxShadow = '0 4px 14px rgba(88, 101, 242, 0.3)';
+                        if (val.length >= 5) {
+                            btn.disabled = false;
+                            btn.style.opacity = '1';
+                            btn.style.pointerEvents = 'auto';
+                            btn.style.cursor = 'pointer';
+                            btn.style.boxShadow = '0 4px 14px rgba(88, 101, 242, 0.3)';
+                        } else {
+                            btn.disabled = true;
+                            btn.style.opacity = '0.45';
+                            btn.style.pointerEvents = 'none';
+                            btn.style.cursor = 'not-allowed';
+                            btn.style.boxShadow = 'none';
+                        }
                     } else if (data.status === 'no_price') {
                         if (detArea) detArea.style.display = 'block';
                         if (detSuccess) detSuccess.style.display = 'none';
@@ -5561,7 +5569,7 @@
                         if (detSuccess) detSuccess.style.display = 'none';
                         if (detError) detError.style.display = 'none';
 
-                        if (val.length >= 7) {
+                        if (val.length >= 5) {
                             btn.disabled = false;
                             btn.style.opacity = '1';
                             btn.style.pointerEvents = 'auto';
@@ -5578,7 +5586,7 @@
                 } catch (e) {
                     console.error(e);
                 }
-            }, 300);
+            }, 150);
         }
 
         function openAddNumberModal() {

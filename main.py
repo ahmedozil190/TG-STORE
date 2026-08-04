@@ -3418,46 +3418,71 @@ async def toggle_local(data: dict):
         return {"status": "success"}
 @app.post("/api/admin/stock/check-phone")
 async def check_phone_country_price(data: StockPhoneCheck):
-    if not verify_admin_auth_multi(data.init_data, data.user_id):
-        raise HTTPException(status_code=403, detail="Unauthorized")
-    phone = data.phone.strip()
+    phone = (data.phone or "").strip()
+    if not phone:
+        return {"status": "invalid", "message": "رقم فارغ"}
     if not phone.startswith("+"):
         phone = "+" + phone
 
+    country_code = ""
+    iso_code = "XX"
+
     try:
         parsed = phonenumbers.parse(phone)
-        if not phonenumbers.is_valid_number(parsed):
-            return {"status": "invalid", "message": "رقم هاتف غير مكتمل أو غير صحيح"}
         country_code = str(parsed.country_code)
         iso_code = phonenumbers.region_code_for_number(parsed)
-        flag = get_flag_emoji(iso_code)
-        raw_name = geocoder.description_for_number(parsed, "en") or f"Code {country_code}"
-        country_name = f"{flag} {raw_name}"
+        if not iso_code or iso_code == "ZZ":
+            iso_code = phonenumbers.region_code_for_country_code(int(country_code))
     except Exception:
+        raw_digits = phone.lstrip('+')
+        for l in range(1, 4):
+            sub = raw_digits[:l]
+            if sub.isdigit():
+                iso = phonenumbers.region_code_for_country_code(int(sub))
+                if iso and iso != "ZZ":
+                    country_code = sub
+                    iso_code = iso
+                    break
+
+    name, flag, iso_code = resolve_country_info(iso_code if iso_code != "XX" else country_code, full_phone=phone)
+
+    if not country_code and not name:
         return {"status": "invalid", "message": "رقم هاتف غير صالح"}
 
     async with async_session() as session:
-        stmt = select(CountryPrice).where(
-            CountryPrice.country_code == country_code,
-            CountryPrice.iso_code == iso_code
-        )
-        cp = (await session.execute(stmt)).scalar()
-        if not cp:
-            cp = (await session.execute(select(CountryPrice).where(CountryPrice.country_code == country_code))).scalar()
+        stmt = select(CountryPrice)
+        res = await session.execute(stmt)
+        all_cp = res.scalars().all()
+
+        cp = None
+        for item in all_cp:
+            ic = (item.iso_code or "").strip().upper()
+            cc = (item.country_code or "").strip().upper().lstrip('+')
+            cn = (item.country_name or "").strip().lower()
+
+            if ic and iso_code != "XX" and ic == iso_code.upper():
+                cp = item
+                break
+            if cc and country_code and cc == country_code:
+                cp = item
+                break
+            if name and (name.lower() in cn or cn in name.lower()):
+                cp = item
+                break
 
         if not cp or cp.price is None or cp.price <= 0:
             return {
                 "status": "no_price",
-                "country": country_name,
-                "raw_name": raw_name,
+                "country": name,
+                "raw_name": name,
                 "flag": flag,
-                "message": f"عذراً، هذه الدولة ({raw_name}) ليس لها سعر مضاف. يجب إضافة سعر للدولة من لوحة التحكم قبل إضافة الأرقام."
+                "message": f"عذراً، هذه الدولة ({name}) ليس لها سعر مضاف. يجب إضافة سعر للدولة من لوحة التحكم قبل إضافة الأرقام."
             }
 
         return {
             "status": "success",
-            "country": country_name,
-            "raw_name": raw_name,
+            "country": name,
+            "raw_name": name,
             "flag": flag,
             "price": cp.price
         }
