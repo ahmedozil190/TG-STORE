@@ -3311,7 +3311,7 @@ async def get_servers(user_id: int, init_data: str):
     if not verify_admin_auth_multi(init_data, user_id):
         raise HTTPException(status_code=403, detail="Unauthorized")
     async with async_session() as session:
-        stmt = select(ApiServer).order_by(ApiServer.id.asc())
+        stmt = select(ApiServer).order_by(ApiServer.id.desc())
         servers = (await session.execute(stmt)).scalars().all()
         server_data = []
         for s in servers:
@@ -3780,7 +3780,11 @@ async def get_subscription_channels(user_id: int, init_data: str, bot_type: str 
     if not verify_admin_auth_multi(init_data, user_id):
         raise HTTPException(status_code=403, detail="Unauthorized")
     async with async_session() as session:
-        result = await session.execute(select(SubscriptionChannel).where(SubscriptionChannel.bot_type == bot_type))
+        result = await session.execute(
+            select(SubscriptionChannel)
+            .where(SubscriptionChannel.bot_type == bot_type)
+            .order_by(SubscriptionChannel.id.desc())
+        )
         channels = result.scalars().all()
         return [{"id": c.id, "bot_type": c.bot_type, "username": c.username, "link": c.link} for c in channels]
 
