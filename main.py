@@ -3562,6 +3562,64 @@ async def update_price(data: PriceUpdate):
         await session.commit()
     return {"status": "success"}
 
+@app.get("/api/admin/stock/inventory")
+async def get_stock_inventory(user_id: int, init_data: str, page: int = 1, limit: int = 15, search: str = ""):
+    if not verify_admin_auth_multi(init_data, user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    async with async_session() as session:
+        # Only local stock (server_id is NULL, status AVAILABLE)
+        base_q = select(Account).where(
+            Account.status == AccountStatus.AVAILABLE,
+            Account.server_id == None
+        )
+        if search:
+            base_q = base_q.where(
+                (Account.phone_number.ilike(f"%{search}%")) |
+                (Account.country.ilike(f"%{search}%"))
+            )
+        total = (await session.execute(select(func.count()).select_from(base_q.subquery()))).scalar() or 0
+        stmt = base_q.order_by(Account.id.desc()).offset((page - 1) * limit).limit(limit)
+        accounts = (await session.execute(stmt)).scalars().all()
+
+        items = []
+        for acc in accounts:
+            flag = "🌐"
+            try:
+                p = phonenumbers.parse(acc.phone_number)
+                flag = get_flag_emoji(phonenumbers.region_code_for_number(p))
+            except: pass
+            items.append({
+                "id": acc.id,
+                "phone": acc.phone_number,
+                "country": acc.country,
+                "flag": flag,
+                "price": acc.price,
+                "created_at": acc.created_at.isoformat() if acc.created_at else None
+            })
+
+        # Summary stats
+        total_available = (await session.execute(
+            select(func.count(Account.id)).where(Account.status == AccountStatus.AVAILABLE, Account.server_id == None)
+        )).scalar() or 0
+        total_countries = (await session.execute(
+            select(func.count(func.distinct(Account.country))).where(Account.status == AccountStatus.AVAILABLE, Account.server_id == None)
+        )).scalar() or 0
+        last_added = (await session.execute(
+            select(Account.created_at).where(Account.status == AccountStatus.AVAILABLE, Account.server_id == None).order_by(Account.id.desc()).limit(1)
+        )).scalar()
+
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "pages": max(1, (total + limit - 1) // limit),
+            "stats": {
+                "total_available": total_available,
+                "total_countries": total_countries,
+                "last_added": last_added.isoformat() if last_added else None
+            }
+        }
+
 @app.delete("/api/admin/stock/delete/{acc_id}")
 async def delete_stock(acc_id: int, user_id: int, init_data: str):
     if not verify_admin_auth_multi(init_data, user_id):
