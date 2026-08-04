@@ -5532,13 +5532,21 @@
                     });
                     const data = await res.json();
 
+                    const detSuccess = document.getElementById('inv-det-success');
+
                     if (data.status === 'success') {
                         if (detArea) detArea.style.display = 'block';
-                        if (detSuccess) detSuccess.style.display = 'flex';
-                        if (detError) detError.style.display = 'none';
+                        if (detSuccess) {
+                            detSuccess.style.display = 'flex';
+                            detSuccess.style.background = 'rgba(88, 101, 242, 0.08)';
+                            detSuccess.style.border = '1px solid var(--accent-glow)';
+                        }
                         document.getElementById('inv-det-flag').innerText = data.flag || '🚩';
                         document.getElementById('inv-det-name').innerText = data.raw_name || data.country;
-                        document.getElementById('inv-det-price').innerText = '$' + parseFloat(data.price).toFixed(2);
+
+                        const priceEl = document.getElementById('inv-det-price');
+                        priceEl.innerText = '$' + parseFloat(data.price).toFixed(2);
+                        priceEl.style.color = 'var(--accent)';
 
                         if (val.length >= 5) {
                             btn.disabled = false;
@@ -5555,9 +5563,17 @@
                         }
                     } else if (data.status === 'no_price') {
                         if (detArea) detArea.style.display = 'block';
-                        if (detSuccess) detSuccess.style.display = 'none';
-                        if (detError) detError.style.display = 'flex';
-                        document.getElementById('inv-det-error-msg').innerText = data.message;
+                        if (detSuccess) {
+                            detSuccess.style.display = 'flex';
+                            detSuccess.style.background = 'rgba(239, 68, 68, 0.08)';
+                            detSuccess.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                        }
+                        document.getElementById('inv-det-flag').innerText = data.flag || '🚩';
+                        document.getElementById('inv-det-name').innerText = data.raw_name || data.country;
+
+                        const priceEl = document.getElementById('inv-det-price');
+                        priceEl.innerText = '$0.00';
+                        priceEl.style.color = '#ef4444';
 
                         btn.disabled = true;
                         btn.style.opacity = '0.45';
@@ -5567,7 +5583,6 @@
                     } else {
                         if (detArea) detArea.style.display = 'none';
                         if (detSuccess) detSuccess.style.display = 'none';
-                        if (detError) detError.style.display = 'none';
 
                         if (val.length >= 5) {
                             btn.disabled = false;
