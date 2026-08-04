@@ -2776,10 +2776,10 @@
 
                 <div class="input-group" style="border-bottom: 2px solid var(--border); margin-bottom: 25px; padding-bottom: 8px; text-align: left;">
                     <label data-i18n="phone_number_lbl" style="display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">PHONE NUMBER</label>
-                    <input type="tel" id="inv-phone-input" class="w-input" placeholder="+123..." style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.3rem; font-weight: 700; font-family: inherit; direction: ltr;">
+                    <input type="tel" id="inv-phone-input" class="w-input" placeholder="+123..." oninput="checkInvPhoneInput()" style="width: 100%; background: transparent; border: none; outline: none; color: var(--text-p); font-size: 1.3rem; font-weight: 700; font-family: inherit; direction: ltr;">
                 </div>
 
-                <button class="btn-action" id="inv-get-code-btn" onclick="invGetCode(this)" style="width: 100%; background: var(--accent); color: white; padding: 18px; border-radius: 18px; border: none; font-size: 1rem; font-weight: 800; cursor: pointer; box-shadow: 0 5px 15px var(--accent-glow); transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <button class="btn-action" id="inv-get-code-btn" onclick="invGetCode(this)" disabled style="width: 100%; background: var(--accent); color: white; padding: 18px; border-radius: 18px; border: none; font-size: 1rem; font-weight: 800; cursor: not-allowed; box-shadow: none; opacity: 0.45; pointer-events: none; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
                     <span data-i18n="btn_get_code">Get Verification Code</span>
                 </button>
             </div>
@@ -5434,12 +5434,33 @@
         let currentAddPhone = '';
         let currentPhoneHash = '';
 
+        function checkInvPhoneInput() {
+            const input = document.getElementById('inv-phone-input');
+            const btn = document.getElementById('inv-get-code-btn');
+            if (!input || !btn) return;
+            const val = input.value.trim();
+            if (val.length >= 5) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+                btn.style.cursor = 'pointer';
+                btn.style.boxShadow = '0 4px 14px rgba(88, 101, 242, 0.3)';
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = '0.45';
+                btn.style.pointerEvents = 'none';
+                btn.style.cursor = 'not-allowed';
+                btn.style.boxShadow = 'none';
+            }
+        }
+
         function openAddNumberModal() {
             document.getElementById('inv-step-1').style.display = 'block';
             document.getElementById('inv-step-2').style.display = 'none';
             document.getElementById('inv-phone-input').value = '';
             document.getElementById('inv-code-input').value = '';
             document.getElementById('inv-2fa-input').value = '';
+            checkInvPhoneInput();
             document.getElementById('add-number-modal').classList.add('active');
         }
 
@@ -5451,6 +5472,7 @@
         function invBackToStep1() {
             document.getElementById('inv-step-1').style.display = 'block';
             document.getElementById('inv-step-2').style.display = 'none';
+            checkInvPhoneInput();
         }
 
         async function invGetCode(btn) {
