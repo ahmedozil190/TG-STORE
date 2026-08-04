@@ -3074,6 +3074,16 @@
             const resetPriceSearchContainer = document.getElementById('reset-price-search-container');
             if (resetPriceSearchContainer) resetPriceSearchContainer.style.display = 'none';
 
+            // Always reset User Management filter to "Active" on navigation
+            currentTab = 'active';
+            currentPage = 1;
+            const userStatusDot = document.getElementById('user-status-dot');
+            if (userStatusDot) userStatusDot.style.background = '#10b981';
+            const filterLabel = document.getElementById('current-user-filter-label');
+            if (filterLabel) { filterLabel.innerText = 'ACTIVE'; filterLabel.style.color = '#10b981'; }
+            const filterMenu = document.getElementById('user-filter-menu');
+            if (filterMenu) filterMenu.style.display = 'none';
+
             // 3. Hide ALL sections first & reset scroll on each section
             window.scrollTo(0, 0);
             document.documentElement.scrollTop = 0;
