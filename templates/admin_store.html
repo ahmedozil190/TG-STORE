@@ -3074,8 +3074,14 @@
             const resetPriceSearchContainer = document.getElementById('reset-price-search-container');
             if (resetPriceSearchContainer) resetPriceSearchContainer.style.display = 'none';
 
-            // 3. Hide ALL sections first
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            // 3. Hide ALL sections first & reset scroll on each section
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            document.querySelectorAll('.view-section').forEach(s => {
+                s.scrollTop = 0;
+                s.classList.remove('active');
+            });
 
             // 4. Render page 1 data WHILE section is still hidden
             if (id === 'users') { renderUsers(allUsers); refreshAdminStoreDataSilently(); }

@@ -2551,13 +2551,18 @@
         function switchNav(id, btn) {
             closeNav();
 
-            // Reset state
+            // Reset state & scroll positions across all containers
             currentHistoryPage = 1;
             currentDepPage = 1;
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
             const scroller = document.querySelector('.main-content');
             if (scroller) scroller.scrollTop = 0;
-
-            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.view-panel').forEach(p => {
+                p.scrollTop = 0;
+                p.classList.remove('active');
+            });
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             const section = document.getElementById('section-' + id);
             if (section) section.classList.add('active');
